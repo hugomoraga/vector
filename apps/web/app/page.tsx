@@ -17,7 +17,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
       <div className="text-center">
-        <h1 className="text-display tracking-tight">Vector</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-primary sm:text-display">Vector</h1>
         <p className="text-body-sm text-tertiary mt-2">Loading...</p>
       </div>
     </main>

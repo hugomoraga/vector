@@ -108,9 +108,9 @@ export default function TodayPage() {
   return (
     <>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-heading">Today</h1>
-        <div className="flex items-center gap-3 mt-1">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl font-semibold tracking-tight text-primary sm:text-heading">Today</h1>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <p className="text-body-sm text-tertiary">{date}</p>
           {items.length > 0 && (
             <>
@@ -170,11 +170,11 @@ export default function TodayPage() {
                   {slotItems.map((item: any) => (
                     <div
                       key={item.id}
-                      className={`card-hover flex items-center justify-between gap-4 p-4 ${
+                      className={`card-hover flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
                         item.status === 'done' ? 'opacity-60' : ''
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex min-w-0 items-center gap-3">
                         <input
                           type="checkbox"
                           checked={item.status === 'done'}
@@ -190,7 +190,7 @@ export default function TodayPage() {
                       <select
                         value={item.status}
                         onChange={(e) => updateStatus(item.id, e.target.value)}
-                        className="select text-caption py-1 px-2 w-auto min-w-0 flex-shrink-0"
+                        className="select w-full min-w-0 flex-shrink-0 px-2 py-2 text-caption sm:w-auto sm:py-1"
                       >
                         <option value="pending">Pending</option>
                         <option value="done">Done</option>

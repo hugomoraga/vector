@@ -14,6 +14,13 @@ export default function BacklogPage() {
   const { user, loading } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -48,6 +55,25 @@ export default function BacklogPage() {
     }
   };
 
+  const handleCreate = async () => {
+    if (!formData.title.trim()) return;
+    setSaving(true);
+    try {
+      await api.backlog.create({
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        priority: formData.priority,
+      });
+      setShowForm(false);
+      setFormData({ title: '', description: '', priority: 'medium' });
+      await loadBacklog();
+    } catch (error) {
+      console.error('Failed to create:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -61,14 +87,14 @@ export default function BacklogPage() {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-heading">Backlog</h1>
-          <p className="text-body-sm text-tertiary mt-1">
+          <h1 className="text-xl font-semibold tracking-tight text-primary sm:text-heading">Backlog</h1>
+          <p className="mt-1 text-body-sm text-tertiary">
             {pendingItems.length} pending item{pendingItems.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button className="btn-primary">
+        <button type="button" onClick={() => setShowForm(true)} className="btn-primary w-full shrink-0 sm:w-auto">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
@@ -76,6 +102,61 @@ export default function BacklogPage() {
           New Item
         </button>
       </div>
+
+      {showForm && (
+        <div className="card mb-6 sm:mb-8">
+          <h2 className="mb-4 text-subheading sm:mb-5">New backlog item</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="input-label">Title</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="input"
+                placeholder="What do you want to do?"
+              />
+            </div>
+            <div>
+              <label className="input-label">Description (optional)</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="input min-h-[5rem] py-2"
+                rows={3}
+                placeholder="Notes…"
+              />
+            </div>
+            <div>
+              <label className="input-label">Priority</label>
+              <select
+                value={formData.priority}
+                onChange={(e) =>
+                  setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' })
+                }
+                className="input"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button type="button" className="btn-secondary order-2 sm:order-1" onClick={() => setShowForm(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary order-1 sm:order-2"
+                disabled={saving || !formData.title.trim()}
+                onClick={() => void handleCreate()}
+              >
+                {saving ? 'Saving…' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* List */}
       {loadingData ? (
@@ -97,14 +178,14 @@ export default function BacklogPage() {
       ) : (
         <div className="space-y-3">
           {pendingItems.map(item => (
-            <div key={item.id} className="card-hover p-5">
-              <div className="flex items-start justify-between gap-4">
+            <div key={item.id} className="card-hover p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 flex-1">
                   <h3 className="text-body font-medium text-primary">{item.title}</h3>
                   {item.description && (
                     <p className="text-body-sm text-secondary mt-1">{item.description}</p>
                   )}
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     {item.priority && (
                       <span className={PRIORITY_STYLES[item.priority] || 'chip'}>
                         {item.priority}
@@ -123,8 +204,9 @@ export default function BacklogPage() {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => promoteToToday(item.id)}
-                  className="btn-secondary btn-sm flex-shrink-0"
+                  className="btn-secondary btn-sm w-full shrink-0 sm:w-auto"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="17 1 21 5 17 9" />

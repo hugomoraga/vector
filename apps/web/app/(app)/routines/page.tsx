@@ -90,14 +90,14 @@ export default function RoutinesPage() {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-heading">Routines</h1>
-          <p className="text-body-sm text-tertiary mt-1">
+          <h1 className="text-xl font-semibold tracking-tight text-primary sm:text-heading">Routines</h1>
+          <p className="mt-1 text-body-sm text-tertiary">
             {routines.length} routine{routines.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary">
+        <button type="button" onClick={() => setShowForm(true)} className="btn-primary w-full shrink-0 sm:w-auto">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
@@ -108,11 +108,11 @@ export default function RoutinesPage() {
 
       {/* Create form */}
       {showForm && (
-        <div className="card mb-8">
-          <h2 className="text-subheading mb-5">Create Routine</h2>
+        <div className="card mb-6 sm:mb-8">
+          <h2 className="mb-4 text-subheading sm:mb-5">Create Routine</h2>
 
           <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="input-label">Name</label>
                 <input
@@ -150,7 +150,7 @@ export default function RoutinesPage() {
               <label className="input-label mb-2">Steps</label>
               <div className="space-y-2">
                 {formData.steps.map((step, index) => (
-                  <div key={step.id} className="flex gap-2">
+                  <div key={step.id} className="flex min-w-0 gap-2">
                     <span className="flex items-center justify-center w-6 h-9 text-caption text-muted">
                       {index + 1}
                     </span>
@@ -180,7 +180,7 @@ export default function RoutinesPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={addStep} className="btn-ghost text-caption mt-2">
+              <button type="button" onClick={addStep} className="btn-ghost mt-2 text-caption">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
@@ -191,11 +191,11 @@ export default function RoutinesPage() {
 
             <div className="divider" />
 
-            <div className="flex gap-3">
-              <button onClick={handleSave} disabled={saving || !formData.name || !formData.category} className="btn-primary">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button type="button" onClick={handleSave} disabled={saving || !formData.name || !formData.category} className="btn-primary w-full sm:w-auto">
                 {saving ? 'Saving...' : 'Save Routine'}
               </button>
-              <button onClick={() => setShowForm(false)} className="btn-secondary">
+              <button type="button" onClick={() => setShowForm(false)} className="btn-secondary w-full sm:w-auto">
                 Cancel
               </button>
             </div>
@@ -221,11 +221,11 @@ export default function RoutinesPage() {
       ) : (
         <div className="space-y-3">
           {routines.map(routine => (
-            <div key={routine.id} className="card-hover p-5">
-              <div className="flex items-start justify-between gap-4">
+            <div key={routine.id} className="card-hover p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-body font-medium text-primary truncate">{routine.name}</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="truncate text-body font-medium text-primary">{routine.name}</h3>
                     <span className={routine.status === 'active' ? 'chip-success' : 'chip'}>
                       {routine.status}
                     </span>
@@ -235,13 +235,13 @@ export default function RoutinesPage() {
                     <p className="text-body-sm text-secondary mt-2">{routine.description}</p>
                   )}
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <button className="btn-ghost btn-icon btn-sm">
+                <div className="flex shrink-0 gap-1 self-start sm:self-auto">
+                  <button type="button" className="btn-ghost btn-icon btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                     </svg>
                   </button>
-                  <button className="btn-ghost btn-icon btn-sm text-[var(--error)]">
+                  <button type="button" className="btn-ghost btn-icon btn-sm text-[var(--error)]">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />

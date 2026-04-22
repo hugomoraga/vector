@@ -29,16 +29,16 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] px-4 py-8">
       <div className="w-full max-w-sm">
         {/* Brand */}
-        <div className="text-center mb-8">
-          <h1 className="text-display tracking-tight">Vector</h1>
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-primary sm:text-display">Vector</h1>
           <p className="text-body-sm text-tertiary mt-2">Sign in to your account</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="card p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="card space-y-5 p-5 sm:p-6">
           <div>
             <label className="input-label">Email</label>
             <input

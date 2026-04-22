@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -48,18 +48,15 @@ const NAV_ITEMS = [
   },
 ];
 
-function Sidebar() {
+function NavBody({ onNavigate }: { onNavigate?: () => void }) {
   const { signOut } = useAuth();
   const pathname = usePathname();
 
   return (
-    <aside className="w-60 min-h-screen flex flex-col border-r border-[var(--border)] bg-[var(--surface)]">
-      {/* Logo */}
+    <>
       <div className="px-5 py-6">
         <h2 className="text-subheading tracking-tight text-primary">Vector</h2>
       </div>
-
-      {/* Nav */}
       <nav className="flex-1 px-3 space-y-0.5">
         {NAV_ITEMS.map(({ href, label, icon }) => {
           const isActive = pathname === href;
@@ -67,6 +64,7 @@ function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={`
                 flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm transition-colors duration-150
                 ${isActive
@@ -81,11 +79,13 @@ function Sidebar() {
           );
         })}
       </nav>
-
-      {/* Sign out */}
       <div className="px-3 py-4 border-t border-[var(--border)]">
         <button
-          onClick={signOut}
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            void signOut();
+          }}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-body-sm text-muted hover:text-secondary hover:bg-[var(--surface-hover)] transition-colors duration-150"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -96,19 +96,36 @@ function Sidebar() {
           Sign Out
         </button>
       </div>
-    </aside>
+    </>
   );
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileNavOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileNavOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileNavOpen]);
 
   if (loading) {
     return (
@@ -122,12 +139,52 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return null;
   }
 
+  const closeMobileNav = () => setMobileNavOpen(false);
+
   return (
     <div className="flex min-h-screen bg-[var(--bg)]">
-      <Sidebar />
-      <main className="flex-1 px-10 py-8 max-w-4xl">
-        {children}
-      </main>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-60 min-h-screen flex-col shrink-0 border-r border-[var(--border)] bg-[var(--surface)]">
+        <NavBody />
+      </aside>
+
+      {/* Mobile drawer */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Close menu"
+            onClick={closeMobileNav}
+          />
+          <aside className="absolute left-0 top-0 bottom-0 flex w-[min(18rem,88vw)] flex-col border-r border-[var(--border)] bg-[var(--surface)] shadow-card">
+            <NavBody onNavigate={closeMobileNav} />
+          </aside>
+        </div>
+      )}
+
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        {/* Mobile top bar */}
+        <header className="sticky top-0 z-40 flex shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3 md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="btn-ghost btn-icon -ml-1 text-primary"
+            aria-label="Open menu"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="18" x2="20" y2="18" />
+            </svg>
+          </button>
+          <span className="text-subheading tracking-tight text-primary">Vector</span>
+        </header>
+
+        <main className="w-full min-w-0 flex-1 px-4 py-6 md:px-8 lg:px-10 md:py-8 max-w-4xl mx-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

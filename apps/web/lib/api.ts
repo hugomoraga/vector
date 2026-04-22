@@ -7,12 +7,12 @@ interface RequestOptions {
   body?: unknown;
 }
 
-async function getIdToken(): Promise<string | null> {
+async function getIdToken(forceRefresh = false): Promise<string | null> {
   if (!auth) return null;
   try {
     const user = auth.currentUser;
     if (user) {
-      return await user.getIdToken();
+      return await user.getIdToken(forceRefresh);
     }
     return null;
   } catch {
@@ -21,21 +21,29 @@ async function getIdToken(): Promise<string | null> {
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const idToken = await getIdToken();
+  const body = options.body ? JSON.stringify(options.body) : undefined;
+  const method = options.method || 'GET';
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+  const fetchOnce = (token: string | null) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return fetch(`${API_URL}${endpoint}`, { method, headers, body });
   };
 
-  if (idToken) {
-    headers['Authorization'] = `Bearer ${idToken}`;
-  }
+  let idToken = await getIdToken(false);
+  let response = await fetchOnce(idToken);
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: options.method || 'GET',
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  // Stale session after tab sleep, etc.: one forced refresh before surfacing 401
+  if (response.status === 401 && idToken) {
+    const refreshed = await getIdToken(true);
+    if (refreshed) {
+      response = await fetchOnce(refreshed);
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
