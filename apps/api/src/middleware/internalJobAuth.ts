@@ -9,9 +9,22 @@ function bearerLooksLikeJwt(token: string): boolean {
   return t.split('.').length >= 3;
 }
 
+function normalizeSecret(s: string): string {
+  return s.trim();
+}
+
+function bodyJobSecret(req: Request): string | undefined {
+  const raw = (req.body as { internalJobSecret?: unknown } | null)?.internalJobSecret;
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  return normalizeSecret(raw);
+}
+
 function getProvidedSecret(req: Request): string | undefined {
   const header = req.get('X-Vector-Job-Secret');
-  if (header) return header.trim();
+  if (header) return normalizeSecret(header);
+
+  const fromBody = bodyJobSecret(req);
+  if (fromBody) return fromBody;
 
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) return undefined;
@@ -19,16 +32,27 @@ function getProvidedSecret(req: Request): string | undefined {
   const token = auth.slice('Bearer '.length).trim();
   if (bearerLooksLikeJwt(token)) return undefined;
 
-  return token;
+  return normalizeSecret(token);
 }
 
 /**
- * Protects /generate-daily and /send-reminders. When INTERNAL_JOB_SECRET is set, requires
- * X-Vector-Job-Secret (preferred for Scheduler + OIDC) or Authorization: Bearer <same value> for manual calls.
- * In production, missing config rejects.
+ * Protects /generate-daily and /send-reminders. When INTERNAL_JOB_SECRET is set, accepts (in order):
+ * X-Vector-Job-Secret, JSON body.internalJobSecret (used by Cloud Scheduler + Terraform), or
+ * Authorization: Bearer <same value> when it is not an OIDC JWT. Values are trimmed (Secret Manager
+ * often ends with a newline). In production, missing config rejects.
  */
 export function internalJobAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const expected = ENV.INTERNAL_JOB_SECRET;
+  const expectedRaw = ENV.INTERNAL_JOB_SECRET;
+  if (!expectedRaw) {
+    if (ENV.NODE_ENV === 'production') {
+      res.status(503).json({ error: 'Job endpoints are disabled (INTERNAL_JOB_SECRET not set)' });
+      return;
+    }
+    next();
+    return;
+  }
+
+  const expected = normalizeSecret(expectedRaw);
   if (!expected) {
     if (ENV.NODE_ENV === 'production') {
       res.status(503).json({ error: 'Job endpoints are disabled (INTERNAL_JOB_SECRET not set)' });
@@ -40,14 +64,21 @@ export function internalJobAuthMiddleware(req: Request, res: Response, next: Nex
 
   const provided = getProvidedSecret(req);
   if (!provided) {
-    res.status(401).json({ error: 'Unauthorized' });
+    console.warn('[internal-job-auth] missing secret', {
+      path: req.path,
+      hasHeader: Boolean(req.get('X-Vector-Job-Secret')),
+      hasBodyField: typeof (req.body as { internalJobSecret?: unknown })?.internalJobSecret === 'string',
+      hasBearer: Boolean(req.headers.authorization?.startsWith('Bearer ')),
+    });
+    res.status(401).json({ error: 'Unauthorized', reason: 'missing_job_secret' });
     return;
   }
 
   const a = Buffer.from(provided, 'utf8');
   const b = Buffer.from(expected, 'utf8');
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    res.status(401).json({ error: 'Unauthorized' });
+    console.warn('[internal-job-auth] secret mismatch', { path: req.path });
+    res.status(401).json({ error: 'Unauthorized', reason: 'job_secret_mismatch' });
     return;
   }
 
