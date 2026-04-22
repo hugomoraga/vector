@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/auth';
+import { internalJobAuthMiddleware } from '../middleware/internalJobAuth';
 import { sendSuccess } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
@@ -7,6 +8,8 @@ import { getTodayDayOfWeek, getTodayDateString } from '@vector/utils';
 import type { DailyItem, Routine } from '@vector/types';
 
 const router = Router();
+
+router.use(internalJobAuthMiddleware);
 
 router.post('/', asyncHandler(async (req, res) => {
   const usersSnapshot = await db.collection(FIRESTORE_COLLECTIONS.USERS).get();

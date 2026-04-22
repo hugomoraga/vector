@@ -10,6 +10,17 @@ export const ENV = {
   TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME || '',
   TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET || '',
 
+  /**
+   * Optional copy for the Telegram webhook. Use {{chatId}} in TELEGRAM_MSG_WELCOME_PLAIN where the numeric chat id should appear.
+   * If unset, apps/api falls back to built-in defaults.
+   */
+  TELEGRAM_MSG_WELCOME_PLAIN: process.env.TELEGRAM_MSG_WELCOME_PLAIN || '',
+  TELEGRAM_MSG_WELCOME_LINKED: process.env.TELEGRAM_MSG_WELCOME_LINKED || '',
+  TELEGRAM_MSG_LINK_INVALID: process.env.TELEGRAM_MSG_LINK_INVALID || '',
+
+  /** Shared secret for Cloud Scheduler (or similar) calling /generate-daily and /send-reminders */
+  INTERNAL_JOB_SECRET: process.env.INTERNAL_JOB_SECRET || '',
+
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
 
   DEFAULT_RETENTION_DAYS: 60,

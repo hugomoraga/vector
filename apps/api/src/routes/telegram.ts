@@ -13,6 +13,11 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { ENV, FIRESTORE_COLLECTIONS } from '@vector/config';
 import { db } from '../lib/firebase-admin';
 import { telegramSendMessage } from '../lib/telegram';
+import {
+  telegramLinkInvalidMessage,
+  telegramWelcomeLinkedMessage,
+  telegramWelcomePlainMessage,
+} from '../lib/telegramMessages';
 
 const router = Router();
 
@@ -91,17 +96,11 @@ async function handleStartWithToken(chatId: number, linkToken: string): Promise<
         { merge: true },
       );
     });
-    await telegramSendMessage(
-      chatId,
-      'Vector is linked. You will receive reminders here. You can close Telegram and return to the app.',
-    );
+    await telegramSendMessage(chatId, telegramWelcomeLinkedMessage());
   } catch (e: unknown) {
     const code = e instanceof Error ? e.message : '';
     if (code === 'not_found' || code === 'used' || code === 'expired') {
-      await telegramSendMessage(
-        chatId,
-        'This link is invalid or expired. Open Vector on the web, go to Settings, and tap Connect again.',
-      );
+      await telegramSendMessage(chatId, telegramLinkInvalidMessage());
       return;
     }
     throw e;
@@ -109,10 +108,7 @@ async function handleStartWithToken(chatId: number, linkToken: string): Promise<
 }
 
 async function handleStartPlain(chatId: number): Promise<void> {
-  await telegramSendMessage(
-    chatId,
-    `Your Telegram chat ID is: ${chatId}\n\nTo link your Vector account automatically, open the app on the web, go to Settings → Telegram reminders, and tap Connect.`,
-  );
+  await telegramSendMessage(chatId, telegramWelcomePlainMessage(chatId));
 }
 
 async function processUpdate(body: TelegramUpdate): Promise<void> {

@@ -69,10 +69,37 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      dynamic "env" {
+        for_each = var.internal_job_secret != "" ? [1] : []
+        content {
+          name = "INTERNAL_JOB_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.internal_job_secret[0].secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
       # After secret-backed env blocks so Terraform plans show stable ordering (not "TOKEN -> USERNAME").
       env {
         name  = "TELEGRAM_BOT_USERNAME"
         value = var.telegram_bot_username
+      }
+
+      dynamic "env" {
+        for_each = {
+          for k, v in {
+            TELEGRAM_MSG_WELCOME_PLAIN  = var.telegram_msg_welcome_plain
+            TELEGRAM_MSG_WELCOME_LINKED = var.telegram_msg_welcome_linked
+            TELEGRAM_MSG_LINK_INVALID   = var.telegram_msg_link_invalid
+          } : k => v if v != ""
+        }
+        content {
+          name  = env.key
+          value = env.value
+        }
       }
 
       startup_probe {

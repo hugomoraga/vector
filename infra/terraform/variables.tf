@@ -34,9 +34,34 @@ variable "telegram_bot_username" {
   default     = ""
 }
 
+variable "telegram_msg_welcome_plain" {
+  type        = string
+  description = "Optional API env TELEGRAM_MSG_WELCOME_PLAIN (/start without deep link); use {{chatId}} for chat id"
+  default     = ""
+}
+
+variable "telegram_msg_welcome_linked" {
+  type        = string
+  description = "Optional API env TELEGRAM_MSG_WELCOME_LINKED (after successful Telegram link)"
+  default     = ""
+}
+
+variable "telegram_msg_link_invalid" {
+  type        = string
+  description = "Optional API env TELEGRAM_MSG_LINK_INVALID (invalid/expired link token)"
+  default     = ""
+}
+
 variable "telegram_webhook_secret" {
   type        = string
   description = "Secret token for Telegram setWebhook (X-Telegram-Bot-Api-Secret-Token)"
+  sensitive   = true
+  default     = ""
+}
+
+variable "internal_job_secret" {
+  type        = string
+  description = "Shared secret for POST /generate-daily and /send-reminders (X-Vector-Job-Secret or Bearer)"
   sensitive   = true
   default     = ""
 }

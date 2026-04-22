@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/auth';
+import { internalJobAuthMiddleware } from '../middleware/internalJobAuth';
 import { sendSuccess, sendError } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS, ENV } from '@vector/config';
@@ -7,6 +8,8 @@ import { getTodayDateString } from '@vector/utils';
 import type { UserSettings } from '@vector/types';
 
 const router = Router();
+
+router.use(internalJobAuthMiddleware);
 
 router.post('/', asyncHandler(async (req, res) => {
   if (!ENV.TELEGRAM_BOT_TOKEN) {
