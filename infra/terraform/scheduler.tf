@@ -1,12 +1,12 @@
 # ── Cloud Scheduler Jobs ────────────────────────
-# All times in Buenos Aires timezone
+# All times in Chile (America/Santiago) timezone
 
 resource "google_cloud_scheduler_job" "generate_daily" {
   name        = "vector-generate-daily"
   description = "Generate daily items for all users at 5 AM"
   region      = var.region
   schedule    = "0 5 * * *"
-  time_zone   = "America/Argentina/Buenos_Aires"
+  time_zone   = "America/Santiago"
 
   http_target {
     http_method = "POST"
@@ -24,7 +24,7 @@ resource "google_cloud_scheduler_job" "reminder_morning" {
   description = "Send Telegram reminders at 9 AM"
   region      = var.region
   schedule    = "0 9 * * *"
-  time_zone   = "America/Argentina/Buenos_Aires"
+  time_zone   = "America/Santiago"
 
   http_target {
     http_method = "POST"
@@ -42,7 +42,7 @@ resource "google_cloud_scheduler_job" "reminder_afternoon" {
   description = "Send Telegram reminders at 2 PM"
   region      = var.region
   schedule    = "0 14 * * *"
-  time_zone   = "America/Argentina/Buenos_Aires"
+  time_zone   = "America/Santiago"
 
   http_target {
     http_method = "POST"
@@ -60,7 +60,7 @@ resource "google_cloud_scheduler_job" "reminder_evening" {
   description = "Send Telegram reminders at 7 PM"
   region      = var.region
   schedule    = "0 19 * * *"
-  time_zone   = "America/Argentina/Buenos_Aires"
+  time_zone   = "America/Santiago"
 
   http_target {
     http_method = "POST"

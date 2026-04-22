@@ -45,7 +45,7 @@ router.get('/:id', authMiddleware, asyncHandler(async (req, res) => {
   sendSuccess(res, { id: doc.id, ...doc.data() } as DailyItem);
 }));
 
-router.patch('/:id', asyncHandler(async (req, res) => {
+router.patch('/:id', authMiddleware, asyncHandler(async (req, res) => {
   const { uid } = (req as any).user;
   const { id } = req.params;
   const { status } = req.body;
@@ -67,7 +67,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() });
 }));
 
-router.post('/promote/:backlogId', asyncHandler(async (req, res) => {
+router.post('/promote/:backlogId', authMiddleware, asyncHandler(async (req, res) => {
   const { uid } = (req as any).user;
   const { backlogId } = req.params;
   const { date, slot } = req.body;
