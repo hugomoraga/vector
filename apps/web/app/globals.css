@@ -1,0 +1,334 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   Design System Tokens
+   ───────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* Background */
+    --bg: #F6F8FA;
+    --surface: #FFFFFF;
+    --surface-hover: #F0F0F0;
+    --surface-active: #E5E5E5;
+
+    /* Text */
+    --text-primary: #111111;
+    --text-secondary: #333333;
+    --text-tertiary: #666666;
+    --text-muted: #BDBDBD;
+    --text-disabled: #D1D1D1;
+
+    /* Borders */
+    --border: #E5E5E5;
+    --border-hover: #BDBDBD;
+    --border-focus: #111111;
+
+    /* Status */
+    --success: #2DA44E;
+    --warning: #BF8700;
+    --error: #D1242F;
+
+    /* Interactive */
+    --accent: #111111;
+    --accent-hover: #333333;
+    --accent-text: #FFFFFF;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-primary);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-text);
+  }
+
+  /* Focus ring global */
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Typography
+   ───────────────────────────────────────────── */
+
+@layer base {
+  h1 { @apply text-display text-[var(--text-primary)]; }
+  h2 { @apply text-heading text-[var(--text-primary)]; }
+  h3 { @apply text-subheading text-[var(--text-primary)]; }
+  p  { @apply text-body text-[var(--text-secondary)]; }
+  small { @apply text-caption text-[var(--text-tertiary)]; }
+}
+
+/* ─────────────────────────────────────────────
+   Components
+   ───────────────────────────────────────────── */
+
+@layer components {
+
+  /* ── Buttons ─────────────────────────────── */
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2 rounded-lg
+           text-body-sm font-medium
+           transition-all duration-150 cursor-pointer
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn;
+    background-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn-secondary {
+    @apply btn;
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--surface-hover);
+    border-color: var(--border-hover);
+  }
+  .btn-secondary:active:not(:disabled) {
+    background-color: var(--surface-active);
+  }
+
+  .btn-ghost {
+    @apply btn;
+    background-color: transparent;
+    color: var(--text-tertiary);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+  }
+
+  .btn-danger {
+    @apply btn;
+    background-color: transparent;
+    color: var(--error);
+    border: 1px solid var(--error);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background-color: var(--error);
+    color: white;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-caption;
+  }
+
+  .btn-icon {
+    @apply p-2 rounded-lg;
+  }
+
+  /* ── Inputs ──────────────────────────────── */
+
+  .input {
+    @apply w-full px-3 py-2 rounded-lg text-body-sm;
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .input::placeholder {
+    color: var(--text-muted);
+  }
+  .input:hover:not(:disabled):not(:focus) {
+    border-color: var(--border-hover);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 1px var(--border-focus);
+  }
+  .input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--surface-hover);
+  }
+
+  .input-label {
+    @apply block text-caption font-medium mb-1.5;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Select ──────────────────────────────── */
+
+  .select {
+    @apply input appearance-none cursor-pointer pr-8;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ── Cards ───────────────────────────────── */
+
+  .card {
+    @apply rounded-xl p-5;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .card-hover {
+    @apply card cursor-pointer;
+    transition: border-color 150ms, background-color 150ms;
+  }
+  .card-hover:hover {
+    border-color: var(--border-hover);
+  }
+
+  /* ── Chips / Tags ────────────────────────── */
+
+  .chip {
+    @apply inline-flex items-center px-2.5 py-1 rounded-md text-caption font-medium;
+    background-color: var(--surface-hover);
+    color: var(--text-tertiary);
+  }
+
+  .chip-active {
+    @apply chip;
+    background-color: var(--accent);
+    color: var(--accent-text);
+  }
+
+  .chip-success {
+    @apply chip;
+    background-color: #ECFDF5;
+    color: var(--success);
+  }
+
+  .chip-warning {
+    @apply chip;
+    background-color: #FFFBEB;
+    color: var(--warning);
+  }
+
+  .chip-error {
+    @apply chip;
+    background-color: #FEF2F2;
+    color: var(--error);
+  }
+
+  /* ── Checkbox ────────────────────────────── */
+
+  .checkbox {
+    @apply w-4 h-4 rounded cursor-pointer appearance-none;
+    border: 1.5px solid var(--border-hover);
+    transition: all 150ms;
+  }
+  .checkbox:hover {
+    border-color: var(--accent);
+  }
+  .checkbox:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  /* ── Toggle ──────────────────────────────── */
+
+  .toggle {
+    @apply relative inline-flex items-center w-10 h-6 rounded-full cursor-pointer;
+    background-color: var(--border);
+    transition: background-color 200ms;
+  }
+  .toggle::after {
+    content: '';
+    @apply absolute w-4 h-4 rounded-full;
+    left: 4px;
+    background-color: white;
+    transition: transform 200ms;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .toggle[data-checked="true"],
+  .toggle.active {
+    background-color: var(--accent);
+  }
+  .toggle[data-checked="true"]::after,
+  .toggle.active::after {
+    transform: translateX(16px);
+  }
+
+  /* ── Divider ─────────────────────────────── */
+
+  .divider {
+    @apply w-full my-5;
+    height: 1px;
+    background-color: var(--border);
+  }
+
+  /* ── Empty State ─────────────────────────── */
+
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 text-center;
+  }
+  .empty-state-title {
+    @apply text-body font-medium;
+    color: var(--text-secondary);
+  }
+  .empty-state-description {
+    @apply text-body-sm mt-1;
+    color: var(--text-muted);
+  }
+
+  /* ── Status dot ──────────────────────────── */
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full inline-block;
+  }
+  .status-dot-pending { background-color: var(--text-muted); }
+  .status-dot-done { background-color: var(--success); }
+  .status-dot-skipped { background-color: var(--warning); }
+  .status-dot-rescheduled { background-color: var(--error); }
+
+  /* ── Section header ──────────────────────── */
+
+  .section-label {
+    @apply text-overline uppercase tracking-wider;
+    color: var(--text-muted);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Utilities
+   ───────────────────────────────────────────── */
+
+@layer utilities {
+  .text-primary { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .text-tertiary { color: var(--text-tertiary); }
+  .text-muted { color: var(--text-muted); }
+}

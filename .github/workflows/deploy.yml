@@ -1,0 +1,107 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: vector-app-nonprod
+  REGION: us-central1
+  AR_REPO: vector
+  API_IMAGE: us-central1-docker.pkg.dev/vector-app-nonprod/vector/api
+  WEB_IMAGE: us-central1-docker.pkg.dev/vector-app-nonprod/vector/web
+
+permissions:
+  contents: read
+  id-token: write # Required for WIF
+
+jobs:
+  # ── Build + Push Docker images ───────────────
+  build:
+    name: Build & Push
+    runs-on: ubuntu-latest
+    outputs:
+      api_tag: ${{ steps.meta.outputs.api_tag }}
+      web_tag: ${{ steps.meta.outputs.web_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GH_ACTIONS_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Generate image tags
+        id: meta
+        run: |
+          SHA="${{ github.sha }}"
+          SHORT="${SHA:0:7}"
+          echo "api_tag=${{ env.API_IMAGE }}:${SHORT}" >> "$GITHUB_OUTPUT"
+          echo "web_tag=${{ env.WEB_IMAGE }}:${SHORT}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & Push API
+        run: |
+          docker build \
+            -f apps/api/Dockerfile \
+            -t ${{ steps.meta.outputs.api_tag }} \
+            -t ${{ env.API_IMAGE }}:latest \
+            .
+          docker push ${{ steps.meta.outputs.api_tag }}
+          docker push ${{ env.API_IMAGE }}:latest
+
+      - name: Build & Push Web
+        run: |
+          docker build \
+            -f apps/web/Dockerfile \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }} \
+            -t ${{ steps.meta.outputs.web_tag }} \
+            -t ${{ env.WEB_IMAGE }}:latest \
+            .
+          docker push ${{ steps.meta.outputs.web_tag }}
+          docker push ${{ env.WEB_IMAGE }}:latest
+
+  # ── Deploy to Cloud Run ──────────────────────
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GH_ACTIONS_SA }}
+
+      - name: Deploy API to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vector-api
+          image: ${{ needs.build.outputs.api_tag }}
+          region: ${{ env.REGION }}
+
+      - name: Deploy Web to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: vector-web
+          image: ${{ needs.build.outputs.web_tag }}
+          region: ${{ env.REGION }}
+
+      - name: Show URLs
+        run: |
+          echo "API: $(gcloud run services describe vector-api --region=${{ env.REGION }} --format='value(status.url)')"
+          echo "Web: $(gcloud run services describe vector-web --region=${{ env.REGION }} --format='value(status.url)')"
