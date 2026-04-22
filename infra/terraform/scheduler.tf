@@ -1,12 +1,18 @@
 # ── Cloud Scheduler Jobs ────────────────────────
 # All times in Chile (America/Santiago) timezone
 #
-# OIDC authenticates to Cloud Run; the app also expects X-Vector-Job-Secret when
-# INTERNAL_JOB_SECRET is set (same value as var.internal_job_secret / Secret Manager).
+# OIDC goes on Authorization: Bearer <jwt>. The app must receive the job shared secret on
+# X-Vector-Job-Secret only (see internalJobAuth). Header value is read from Secret Manager so it
+# matches what Cloud Run mounts as INTERNAL_JOB_SECRET (avoids tfvars / SM drift).
+
+data "google_secret_manager_secret_version" "internal_job_scheduler" {
+  count  = var.internal_job_secret != "" ? 1 : 0
+  secret = google_secret_manager_secret.internal_job_secret[0].id
+}
 
 locals {
-  scheduler_internal_headers = var.internal_job_secret != "" ? {
-    "X-Vector-Job-Secret" = var.internal_job_secret
+  scheduler_internal_headers = length(data.google_secret_manager_secret_version.internal_job_scheduler) > 0 ? {
+    "X-Vector-Job-Secret" = data.google_secret_manager_secret_version.internal_job_scheduler[0].secret_data
   } : {}
 }
 
@@ -23,10 +29,14 @@ resource "google_cloud_scheduler_job" "generate_daily" {
     headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
+      audience              = google_cloud_run_v2_service.api.uri
     }
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_version.internal_job_secret,
+  ]
 }
 
 resource "google_cloud_scheduler_job" "reminder_morning" {
@@ -42,10 +52,14 @@ resource "google_cloud_scheduler_job" "reminder_morning" {
     headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
+      audience              = google_cloud_run_v2_service.api.uri
     }
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_version.internal_job_secret,
+  ]
 }
 
 resource "google_cloud_scheduler_job" "reminder_afternoon" {
@@ -61,10 +75,14 @@ resource "google_cloud_scheduler_job" "reminder_afternoon" {
     headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
+      audience              = google_cloud_run_v2_service.api.uri
     }
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_version.internal_job_secret,
+  ]
 }
 
 resource "google_cloud_scheduler_job" "reminder_evening" {
@@ -80,8 +98,12 @@ resource "google_cloud_scheduler_job" "reminder_evening" {
     headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
+      audience              = google_cloud_run_v2_service.api.uri
     }
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_version.internal_job_secret,
+  ]
 }

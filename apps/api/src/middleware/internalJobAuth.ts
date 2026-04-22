@@ -2,19 +2,30 @@ import { timingSafeEqual } from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { ENV } from '@vector/config';
 
+/** Cloud Scheduler OIDC is sent as Authorization: Bearer <jwt>; never treat that as INTERNAL_JOB_SECRET. */
+function bearerLooksLikeJwt(token: string): boolean {
+  const t = token.trim();
+  if (!t.startsWith('eyJ')) return false;
+  return t.split('.').length >= 3;
+}
+
 function getProvidedSecret(req: Request): string | undefined {
   const header = req.get('X-Vector-Job-Secret');
   if (header) return header.trim();
+
   const auth = req.headers.authorization;
-  if (auth?.startsWith('Bearer ')) {
-    return auth.slice('Bearer '.length).trim();
-  }
-  return undefined;
+  if (!auth?.startsWith('Bearer ')) return undefined;
+
+  const token = auth.slice('Bearer '.length).trim();
+  if (bearerLooksLikeJwt(token)) return undefined;
+
+  return token;
 }
 
 /**
  * Protects /generate-daily and /send-reminders. When INTERNAL_JOB_SECRET is set, requires
- * X-Vector-Job-Secret or Authorization: Bearer <same value>. In production, missing config rejects.
+ * X-Vector-Job-Secret (preferred for Scheduler + OIDC) or Authorization: Bearer <same value> for manual calls.
+ * In production, missing config rejects.
  */
 export function internalJobAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
   const expected = ENV.INTERNAL_JOB_SECRET;
