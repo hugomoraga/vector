@@ -1,5 +1,14 @@
 # ── Cloud Scheduler Jobs ────────────────────────
 # All times in Chile (America/Santiago) timezone
+#
+# OIDC authenticates to Cloud Run; the app also expects X-Vector-Job-Secret when
+# INTERNAL_JOB_SECRET is set (same value as var.internal_job_secret / Secret Manager).
+
+locals {
+  scheduler_internal_headers = var.internal_job_secret != "" ? {
+    "X-Vector-Job-Secret" = var.internal_job_secret
+  } : {}
+}
 
 resource "google_cloud_scheduler_job" "generate_daily" {
   name        = "vector-generate-daily"
@@ -11,6 +20,7 @@ resource "google_cloud_scheduler_job" "generate_daily" {
   http_target {
     http_method = "POST"
     uri         = "${google_cloud_run_v2_service.api.uri}/generate-daily"
+    headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
     }
@@ -29,6 +39,7 @@ resource "google_cloud_scheduler_job" "reminder_morning" {
   http_target {
     http_method = "POST"
     uri         = "${google_cloud_run_v2_service.api.uri}/send-reminders"
+    headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
     }
@@ -47,6 +58,7 @@ resource "google_cloud_scheduler_job" "reminder_afternoon" {
   http_target {
     http_method = "POST"
     uri         = "${google_cloud_run_v2_service.api.uri}/send-reminders"
+    headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
     }
@@ -65,6 +77,7 @@ resource "google_cloud_scheduler_job" "reminder_evening" {
   http_target {
     http_method = "POST"
     uri         = "${google_cloud_run_v2_service.api.uri}/send-reminders"
+    headers     = local.scheduler_internal_headers
     oidc_token {
       service_account_email = google_service_account.api.email
     }
