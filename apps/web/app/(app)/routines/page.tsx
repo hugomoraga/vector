@@ -40,13 +40,8 @@ function formatRoutineSchedule(routine: { rules?: unknown[] }): string {
   return `${slot}`;
 }
 
-export default function RoutinesPage() {
-  const { user, loading } = useAuth();
-  const [routines, setRoutines] = useState<any[]>([]);
-  const [userSettings, setUserSettings] = useState<any>(null);
-  const [loadingData, setLoadingData] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+function emptyFormState() {
+  return {
     name: '',
     category: '',
     description: '',
@@ -54,7 +49,63 @@ export default function RoutinesPage() {
     scheduleFrequency: 'daily' as 'daily' | 'weekly',
     scheduleDays: [] as DayOfWeek[],
     scheduleSlot: 'morning' as TimeSlot,
-  });
+  };
+}
+
+function routineToFormState(routine: {
+  name?: string;
+  category?: string;
+  description?: string;
+  steps?: { id?: string; name?: string; order?: number; isOptional?: boolean }[];
+  rules?: { frequency?: string; days?: DayOfWeek[]; slot?: string }[];
+}) {
+  const rule = routine.rules?.[0];
+  let scheduleFrequency: 'daily' | 'weekly' = 'daily';
+  let scheduleDays: DayOfWeek[] = [];
+  const scheduleSlot: TimeSlot =
+    rule?.slot === 'afternoon' || rule?.slot === 'evening' ? rule.slot : 'morning';
+
+  if (rule) {
+    if (rule.frequency === 'daily') {
+      scheduleFrequency = 'daily';
+    } else if (rule.frequency === 'weekly') {
+      scheduleFrequency = 'weekly';
+      scheduleDays = [...(rule.days ?? [])];
+    } else if (rule.days && rule.days.length > 0) {
+      scheduleFrequency = 'weekly';
+      scheduleDays = [...rule.days];
+    } else {
+      scheduleFrequency = 'daily';
+    }
+  }
+
+  const rawSteps = routine.steps?.length ? routine.steps : [{ id: '1', name: '', order: 0, isOptional: false }];
+  const steps = rawSteps.map((s, i) => ({
+    id: String(s.id ?? `step-${i}`),
+    name: s.name ?? '',
+    order: typeof s.order === 'number' ? s.order : i,
+    isOptional: Boolean(s.isOptional),
+  }));
+
+  return {
+    name: routine.name ?? '',
+    category: routine.category ?? '',
+    description: routine.description ?? '',
+    steps,
+    scheduleFrequency,
+    scheduleDays,
+    scheduleSlot,
+  };
+}
+
+export default function RoutinesPage() {
+  const { user, loading } = useAuth();
+  const [routines, setRoutines] = useState<any[]>([]);
+  const [userSettings, setUserSettings] = useState<any>(null);
+  const [loadingData, setLoadingData] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(emptyFormState);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -98,23 +149,35 @@ export default function RoutinesPage() {
     setSaving(true);
     try {
       const steps = formData.steps.filter(s => s.name.trim());
+      const existingRoutine = editingRoutineId
+        ? routines.find((r: { id: string }) => r.id === editingRoutineId)
+        : null;
+      const prevOverrides = existingRoutine?.rules?.[0]?.stepOverrides;
+      const stepOverrides = Array.isArray(prevOverrides) ? prevOverrides : [];
       const rules = [
         {
           frequency: formData.scheduleFrequency,
           days: formData.scheduleFrequency === 'daily' ? [] : [...formData.scheduleDays],
           slot: formData.scheduleSlot,
-          stepOverrides: [] as { stepId: string; name: string }[],
+          stepOverrides,
         },
       ];
-      const routine = {
+      const body = {
         name: formData.name,
         category: formData.category,
         description: formData.description,
-        status: 'active' as const,
         steps,
         rules,
       };
-      await api.routines.create(routine);
+
+      if (editingRoutineId) {
+        await api.routines.update(editingRoutineId, {
+          ...body,
+          status: existingRoutine?.status ?? 'active',
+        });
+      } else {
+        await api.routines.create({ ...body, status: 'active' });
+      }
       try {
         const settings = await api.settings.get();
         setUserSettings(settings);
@@ -122,15 +185,8 @@ export default function RoutinesPage() {
         /* ignore */
       }
       setShowForm(false);
-      setFormData({
-        name: '',
-        category: '',
-        description: '',
-        steps: [{ id: '1', name: '', order: 0, isOptional: false }],
-        scheduleFrequency: 'daily',
-        scheduleDays: [],
-        scheduleSlot: 'morning',
-      });
+      setEditingRoutineId(null);
+      setFormData(emptyFormState());
       loadRoutines();
     } catch (error) {
       console.error('Failed to save:', error);
@@ -167,7 +223,15 @@ export default function RoutinesPage() {
             {routines.length} routine{routines.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button type="button" onClick={() => setShowForm(true)} className="btn-primary w-full shrink-0 sm:w-auto">
+        <button
+          type="button"
+          onClick={() => {
+            setEditingRoutineId(null);
+            setFormData(emptyFormState());
+            setShowForm(true);
+          }}
+          className="btn-primary w-full shrink-0 sm:w-auto"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
@@ -179,7 +243,9 @@ export default function RoutinesPage() {
       {/* Create form */}
       {showForm && (
         <div className="card mb-6 sm:mb-8">
-          <h2 className="mb-4 text-subheading sm:mb-5">Create Routine</h2>
+          <h2 className="mb-4 text-subheading sm:mb-5">
+            {editingRoutineId ? 'Edit routine' : 'Create routine'}
+          </h2>
 
           <div className="space-y-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -362,9 +428,17 @@ export default function RoutinesPage() {
                 }
                 className="btn-primary w-full sm:w-auto"
               >
-                {saving ? 'Saving...' : 'Save Routine'}
+                {saving ? 'Saving…' : editingRoutineId ? 'Save changes' : 'Save routine'}
               </button>
-              <button type="button" onClick={() => setShowForm(false)} className="btn-secondary w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingRoutineId(null);
+                  setFormData(emptyFormState());
+                }}
+                className="btn-secondary w-full sm:w-auto"
+              >
                 Cancel
               </button>
             </div>
@@ -406,12 +480,41 @@ export default function RoutinesPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1 self-start sm:self-auto">
-                  <button type="button" className="btn-ghost btn-icon btn-sm">
+                  <button
+                    type="button"
+                    className="btn-ghost btn-icon btn-sm"
+                    aria-label="Edit routine"
+                    onClick={() => {
+                      setEditingRoutineId(routine.id);
+                      setFormData(routineToFormState(routine));
+                      setShowForm(true);
+                    }}
+                  >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                     </svg>
                   </button>
-                  <button type="button" className="btn-ghost btn-icon btn-sm text-[var(--error)]">
+                  <button
+                    type="button"
+                    className="btn-ghost btn-icon btn-sm text-[var(--error)]"
+                    aria-label="Delete routine"
+                    onClick={() => {
+                      if (!window.confirm('Delete this routine? This cannot be undone.')) return;
+                      void (async () => {
+                        try {
+                          await api.routines.delete(routine.id);
+                          if (editingRoutineId === routine.id) {
+                            setShowForm(false);
+                            setEditingRoutineId(null);
+                            setFormData(emptyFormState());
+                          }
+                          loadRoutines();
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      })();
+                    }}
+                  >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
