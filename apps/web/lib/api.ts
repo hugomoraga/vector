@@ -88,6 +88,16 @@ export const api = {
       request<any>(`/api/daily-items/promote/${backlogId}`, { method: 'POST', body: { date, slot } }),
   },
 
+  stats: {
+    dailyCompletion: (endDate?: string, days?: number) => {
+      const params = new URLSearchParams();
+      if (endDate) params.set('endDate', endDate);
+      if (days != null) params.set('days', String(days));
+      const q = params.toString();
+      return request<any>(`/api/stats/daily-completion${q ? `?${q}` : ''}`);
+    },
+  },
+
   settings: {
     get: () => request<any>('/api/settings'),
     update: (data: any) => request<any>('/api/settings', { method: 'PUT', body: data }),

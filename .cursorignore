@@ -1,0 +1,56 @@
+# Cursor index / context noise reduction (Vector monorepo)
+# See AGENTS.md — "Uso del agente (tokens)" for chat habits.
+#
+# .vscode/ is intentionally NOT listed here so workspace settings can be indexed
+# if you ever track them in git (root .gitignore still ignores .vscode/ today).
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+.next/
+**/.next/
+.turbo/
+**/.turbo/
+*.tsbuildinfo
+
+# Test / coverage artifacts (common future paths)
+coverage/
+**/coverage/
+
+# Environment and secrets (align with .gitignore; avoid broad .env.* so .env.example stays readable)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+service-account.json
+*.pem
+
+# Terraform local state and plugins
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.backup
+infra/terraform/.terraform.lock.hcl
+infra/terraform/envs/*.secrets.tfvars
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+
+# OS / editor noise (JetBrains; see note above re: VS Code)
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
+*.log
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

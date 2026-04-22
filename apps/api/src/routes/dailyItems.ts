@@ -6,6 +6,7 @@ import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
 import type { DailyItem } from '@vector/types';
 import { formatDate } from '@vector/utils';
+import { ensureRoutineDailyItemsForUser } from '../lib/ensureRoutineDailyItems';
 
 const router = Router();
 
@@ -14,6 +15,8 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
   const { date } = req.query;
 
   const targetDate = date ? String(date) : formatDate(new Date());
+
+  await ensureRoutineDailyItemsForUser(uid, targetDate);
 
   const query: FirebaseFirestore.Query = db.collection(FIRESTORE_COLLECTIONS.DAILY_ITEMS)
     .where('userId', '==', uid)

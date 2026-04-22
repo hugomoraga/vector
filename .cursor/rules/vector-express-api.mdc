@@ -1,0 +1,26 @@
+---
+description: Convenciones Express, auth Firebase y variables en apps/api
+globs: apps/api/**/*.ts
+alwaysApply: false
+---
+
+# API (`apps/api`)
+
+## Carga de entorno
+
+- `apps/api/src/load-env.ts` importar **antes** de módulos que lean `process.env`.
+- Orden: `.env` luego `.env.local` (override) en el cwd de la API (`apps/api` al ejecutar).
+
+## CORS
+
+- Orígenes permitidos vía `CORS_ORIGIN` (p. ej. `http://localhost:3000` en dev con el front local).
+
+## Autenticación
+
+- Rutas protegidas: cabecera `Authorization: Bearer <Firebase ID token>`; lógica en middleware (p. ej. `src/middleware/auth.ts`).
+- Mismo proyecto Firebase que el cliente web para que `verifyIdToken` sea coherente.
+
+## Seguridad y logs
+
+- No devolver secretos ni credenciales en respuestas JSON.
+- Evitar loguear tokens completos o valores sensibles de `process.env`.

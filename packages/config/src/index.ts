@@ -24,7 +24,7 @@ export const ENV = {
    */
   TELEGRAM_REMINDER_TEMPLATE_JSON: process.env.TELEGRAM_REMINDER_TEMPLATE_JSON || '',
 
-  /** Shared secret for Cloud Scheduler (or similar) calling /generate-daily and /send-reminders */
+  /** Shared secret for Cloud Scheduler (or similar) calling /generate-daily, /send-reminders, /send-daily-summary */
   INTERNAL_JOB_SECRET: process.env.INTERNAL_JOB_SECRET || '',
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -49,4 +49,5 @@ export const API_ROUTES = {
   AUTH: '/api/auth',
   GENERATE_DAILY: '/generate-daily',
   SEND_REMINDERS: '/send-reminders',
+  SEND_DAILY_SUMMARY: '/send-daily-summary',
 } as const;

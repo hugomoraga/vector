@@ -1,0 +1,35 @@
+---
+description: Contexto del monorepo Vector, comandos y convenciones generales
+alwaysApply: true
+---
+
+# Vector monorepo
+
+## Estructura
+
+- `apps/web` — Next.js 14 (App Router), Tailwind, Firebase cliente.
+- `apps/api` — Express, Firebase Admin, Telegram.
+- `packages/config`, `packages/types`, `packages/utils` — código compartido.
+- `infra/terraform` — GCP (Cloud Run, IAM, secretos, etc.).
+
+## Runtime y herramientas
+
+- Node.js **≥ 22**; `packageManager` fijado a **npm@10** en la raíz.
+- Desarrollo: desde la raíz, `npm run dev` (Turbo: web + API).
+
+## Calidad
+
+Tras cambios sustantivos, ejecutar en la raíz (o vía Turbo en el paquete afectado):
+
+- `npm run validate` — `lint` + `typecheck`
+- `npm run lint` / `npm run typecheck` — por separado si hace falta
+
+## Convención de idioma (respuestas)
+
+- Explicaciones y secciones en **español** cuando el usuario escribe en español.
+- Nombres de archivos, APIs, variables de entorno y términos técnicos en **inglés** como en el código.
+
+## Alcance de cambios
+
+- No ampliar el alcance del pedido (refactors masivos, docs no solicitadas).
+- Preferir diffs pequeños y coherentes con el estilo existente del archivo.

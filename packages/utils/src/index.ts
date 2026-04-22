@@ -41,6 +41,69 @@ export function getTodayDateString(): string {
   return formatDate(new Date());
 }
 
+/** Calendar weekday for a `YYYY-MM-DD` string (UTC noon avoids DST edge cases). */
+export function getDayOfWeekFromDateString(dateString: string): DayOfWeek {
+  const parts = dateString.split('-').map(Number);
+  const y = parts[0];
+  const m = parts[1];
+  const d = parts[2];
+  if (!y || !m || !d) {
+    return getTodayDayOfWeek();
+  }
+  const utc = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  return DAY_MAP[utc.getUTCDay()];
+}
+
+/** `YYYY-MM-DD` for an instant interpreted in an IANA time zone. */
+export function formatDateInTimeZone(date: Date, timeZone: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  } catch {
+    return formatDate(date);
+  }
+}
+
+/** Add signed calendar days to a `YYYY-MM-DD` string (UTC noon math). */
+export function addCalendarDays(dateString: string, days: number): string {
+  const parts = dateString.split('-').map(Number);
+  const y = parts[0];
+  const m = parts[1];
+  const d = parts[2];
+  if (!y || !m || !d) {
+    return dateString;
+  }
+  const utc = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  utc.setUTCDate(utc.getUTCDate() + days);
+  const yy = utc.getUTCFullYear();
+  const mm = String(utc.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(utc.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+/** Local hour (0–23) and minute in `timeZone` for `date`. */
+export function getHourMinuteInTimeZone(date: Date, timeZone: string): { hour: number; minute: number } {
+  try {
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = fmt.formatToParts(date);
+    const hour = Number(parts.find(p => p.type === 'hour')?.value ?? '0');
+    const minute = Number(parts.find(p => p.type === 'minute')?.value ?? '0');
+    return { hour, minute };
+  } catch {
+    const local = new Date(date);
+    return { hour: local.getHours(), minute: local.getMinutes() };
+  }
+}
+
 export function parseDate(dateString: string): Date {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);

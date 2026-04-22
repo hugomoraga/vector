@@ -1,0 +1,22 @@
+---
+description: Paquetes compartidos packages/* — imports y límites
+globs: packages/**/*.ts
+alwaysApply: false
+---
+
+# Paquetes (`packages/*`)
+
+## Rol
+
+- `config` — constantes y lectura de entorno compartida.
+- `types` — tipos TypeScript compartidos.
+- `utils` — utilidades sin acoplar a UI ni a Express.
+
+## Imports
+
+- Los `apps/*` consumen `@vector/config`, `@vector/types`, `@vector/utils` (o los alias definidos en el repo).
+- En `packages/*`, **no** importar desde `apps/web` ni `apps/api` (evita ciclos y acoplamiento inverso).
+
+## Cambios de API pública
+
+- Si cambias tipos o firmas usadas por web/API, actualizar consumidores y ejecutar `npm run typecheck`.

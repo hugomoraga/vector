@@ -1,0 +1,29 @@
+---
+description: Convenciones Next.js App Router y cliente Firebase en apps/web
+globs: apps/web/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Web (`apps/web`)
+
+## App Router
+
+- Rutas y layouts bajo `app/` (grupos `(app)`, `(auth)`, etc.).
+- Componentes reutilizables en `components/`; utilidades en `lib/`.
+
+## Variables de entorno
+
+- Prefijo público: `NEXT_PUBLIC_*` (expuesto al navegador).
+- `NEXT_PUBLIC_API_URL` debe apuntar a la API que uses en dev (por defecto API en **http://localhost:3001** si `PORT` no está definido en la API).
+
+```bash
+# Malo (desalineado con la API local por defecto)
+NEXT_PUBLIC_API_URL=http://localhost:9999
+
+# Bueno (alineado con README / API default)
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+## Firebase cliente
+
+- Configuración típica en `lib/firebase.ts`; mantener coherencia con el **mismo proyecto Firebase** que la API (tokens verificables con Admin SDK).

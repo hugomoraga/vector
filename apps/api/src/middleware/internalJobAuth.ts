@@ -36,7 +36,7 @@ function getProvidedSecret(req: Request): string | undefined {
 }
 
 /**
- * Protects /generate-daily and /send-reminders. When INTERNAL_JOB_SECRET is set, accepts (in order):
+ * Protects /generate-daily, /send-reminders, and /send-daily-summary. When INTERNAL_JOB_SECRET is set, accepts (in order):
  * X-Vector-Job-Secret, JSON body.internalJobSecret (used by Cloud Scheduler + Terraform), or
  * Authorization: Bearer <same value> when it is not an OIDC JWT. Values are trimmed (Secret Manager
  * often ends with a newline). In production, missing config rejects.

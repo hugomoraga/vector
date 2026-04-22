@@ -17,6 +17,18 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: '/stats',
+    label: 'Estadísticas',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 3v18h18" />
+        <path d="M7 16V9" />
+        <path d="M12 16v-5" />
+        <path d="M17 16V6" />
+      </svg>
+    ),
+  },
+  {
     href: '/routines',
     label: 'Routines',
     icon: (

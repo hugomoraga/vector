@@ -201,6 +201,59 @@ export default function SettingsPage() {
                         <p className="text-caption text-muted mt-1.5">Saved automatically after you pause typing</p>
                       </div>
                     </details>
+
+                    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-3">
+                      <h3 className="text-body-sm font-medium text-primary">Zona horaria y resumen nocturno</h3>
+                      <p className="text-caption text-muted">
+                        El resumen de Telegram (hecho y pendiente) se envía entre las 22:30 y las 22:44, hora local de esta zona.
+                      </p>
+                      <div>
+                        <label className="input-label">Zona horaria (IANA)</label>
+                        <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <input
+                            type="text"
+                            value={settings?.timeZone ?? ''}
+                            onChange={(e) =>
+                              setSettings((s: any) => (s ? { ...s, timeZone: e.target.value } : s))
+                            }
+                            onBlur={() => {
+                              const tz = (settings?.timeZone ?? '').trim();
+                              if (tz) void api.settings.update({ timeZone: tz }).then(loadSettings);
+                            }}
+                            placeholder="America/Santiago"
+                            className="input flex-1"
+                          />
+                          <button
+                            type="button"
+                            className="btn-secondary shrink-0"
+                            onClick={() => {
+                              const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                              setSettings((s: any) => (s ? { ...s, timeZone: tz } : s));
+                              void api.settings.update({ timeZone: tz }).then(loadSettings);
+                            }}
+                          >
+                            Usar esta máquina
+                          </button>
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings?.telegramEveningSummary !== false}
+                          onChange={async (e) => {
+                            const on = e.target.checked;
+                            try {
+                              await api.settings.update({ telegramEveningSummary: on });
+                              await loadSettings();
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }}
+                          className="checkbox"
+                        />
+                        <span className="text-body-sm text-secondary">Resumen diario por Telegram (~22:30)</span>
+                      </label>
+                    </div>
                   </div>
                 )}
               </div>

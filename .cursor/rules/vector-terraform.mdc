@@ -1,0 +1,21 @@
+---
+description: Terraform GCP — secretos, tfvars y coherencia con Cloud Run
+globs: infra/terraform/**/*.tf
+alwaysApply: false
+---
+
+# Infra (`infra/terraform`)
+
+## Archivos y secretos
+
+- Variables públicas: `envs/<env>.tfvars` (pueden versionarse con cuidado).
+- Secretos: `envs/<env>.secrets.tfvars` — **gitignored**; partir de `*.secrets.tfvars.example`, no commitear valores reales.
+
+## Flujo
+
+- Backends por entorno: `envs/*.backend.hcl`.
+- Script de conveniencia: `infra/terraform/tf.sh` — `tf.sh <env> plan|apply|...`; ver ayuda en el script para `sync-images` y overrides de imágenes Cloud Run.
+
+## Coherencia
+
+- Cambios en servicios/IAM/secretos deben alinearse con cómo despliegan `apps/api` y `apps/web` (imágenes, URLs, cuentas de servicio).

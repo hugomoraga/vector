@@ -10,6 +10,8 @@ import dailyItemsRoutes from './routes/dailyItems';
 import settingsRoutes from './routes/settings';
 import generateDailyRoutes from './routes/generateDaily';
 import sendRemindersRoutes from './routes/sendReminders';
+import sendDailySummaryRoutes from './routes/sendDailySummary';
+import statsRoutes from './routes/stats';
 import telegramRoutes from './routes/telegram';
 
 console.log('Starting Vector API...');
@@ -23,10 +25,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/routines', routinesRoutes);
 app.use('/api/backlog', backlogRoutes);
 app.use('/api/daily-items', dailyItemsRoutes);
+app.use('/api/stats', statsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/generate-daily', generateDailyRoutes);
 app.use('/send-reminders', sendRemindersRoutes);
+app.use('/send-daily-summary', sendDailySummaryRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

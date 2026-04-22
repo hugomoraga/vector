@@ -103,3 +103,23 @@ resource "google_cloud_scheduler_job" "reminder_evening" {
     google_secret_manager_secret_version.internal_job_secret,
   ]
 }
+
+resource "google_cloud_scheduler_job" "daily_summary" {
+  name        = "vector-send-daily-summary"
+  description = "Every 5 minutes UTC: Telegram digest at 22:30 local (per-user timeZone)"
+  region      = var.region
+  schedule    = "*/5 * * * *"
+  time_zone   = "UTC"
+
+  http_target {
+    http_method = "POST"
+    uri         = "${google_cloud_run_v2_service.api.uri}/send-daily-summary"
+    headers     = local.scheduler_internal_headers
+    body        = local.scheduler_internal_body_b64
+  }
+
+  depends_on = [
+    google_project_service.apis,
+    google_secret_manager_secret_version.internal_job_secret,
+  ]
+}

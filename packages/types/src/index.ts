@@ -102,6 +102,12 @@ export interface UserSettings {
   /** Set to the link token’s version when a link completes in the webhook. */
   telegramLastLinkedVersion?: number;
   telegramEnabled: boolean;
+  /** When false, skip the 22:30 daily Telegram digest. Default: enabled. */
+  telegramEveningSummary?: boolean;
+  /** IANA zone (e.g. America/Santiago). Used for digest time and batch daily generation fallback. */
+  timeZone?: string;
+  /** YYYY-MM-DD (user-local) when we last sent the evening digest. */
+  eveningSummaryLastSentDate?: string;
   reminderTimes: ReminderTime[];
   retentionDays: number;
   theme: 'dark' | 'light' | 'system';
