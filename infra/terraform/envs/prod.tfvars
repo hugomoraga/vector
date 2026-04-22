@@ -1,7 +1,7 @@
-project_id  = "vector-app-nonprod"
+project_id  = "vector-app-prod"
 region      = "us-central1"
-environment = "nonprod"
-github_repo = "hmoragam/vector"
+environment = "prod"
+github_repo = "hugomoraga/vector"
 
 # Leave empty until Telegram bot is created
 telegram_bot_token_secret = ""

@@ -4,7 +4,7 @@
 resource "google_cloud_scheduler_job" "generate_daily" {
   name        = "vector-generate-daily"
   description = "Generate daily items for all users at 5 AM"
-  location    = var.region
+  region      = var.region
   schedule    = "0 5 * * *"
   time_zone   = "America/Argentina/Buenos_Aires"
 
@@ -22,7 +22,7 @@ resource "google_cloud_scheduler_job" "generate_daily" {
 resource "google_cloud_scheduler_job" "reminder_morning" {
   name        = "vector-reminder-morning"
   description = "Send Telegram reminders at 9 AM"
-  location    = var.region
+  region      = var.region
   schedule    = "0 9 * * *"
   time_zone   = "America/Argentina/Buenos_Aires"
 
@@ -40,7 +40,7 @@ resource "google_cloud_scheduler_job" "reminder_morning" {
 resource "google_cloud_scheduler_job" "reminder_afternoon" {
   name        = "vector-reminder-afternoon"
   description = "Send Telegram reminders at 2 PM"
-  location    = var.region
+  region      = var.region
   schedule    = "0 14 * * *"
   time_zone   = "America/Argentina/Buenos_Aires"
 
@@ -58,7 +58,7 @@ resource "google_cloud_scheduler_job" "reminder_afternoon" {
 resource "google_cloud_scheduler_job" "reminder_evening" {
   name        = "vector-reminder-evening"
   description = "Send Telegram reminders at 7 PM"
-  location    = var.region
+  region      = var.region
   schedule    = "0 19 * * *"
   time_zone   = "America/Argentina/Buenos_Aires"
 

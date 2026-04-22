@@ -17,7 +17,7 @@ variable "environment" {
 
 variable "github_repo" {
   type        = string
-  default     = "hmoragam/vector"
+  default     = "hugomoraga/vector"
   description = "GitHub repository in owner/repo format for WIF"
 }
 

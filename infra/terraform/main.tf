@@ -9,8 +9,7 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "vector-terraform-state"
-    prefix = "terraform/state"
+    # Configured dynamically via -backend-config=envs/<env>.backend.hcl
   }
 }
 

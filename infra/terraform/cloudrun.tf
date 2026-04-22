@@ -32,11 +32,6 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
-        name  = "PORT"
-        value = "8080"
-      }
-
-      env {
         name  = "CORS_ORIGIN"
         value = var.web_image != "" ? google_cloud_run_v2_service.web.uri : "*"
       }
