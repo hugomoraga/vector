@@ -25,6 +25,7 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
       ],
       retentionDays: 60,
       theme: 'system',
+      categories: [],
     };
 
     await userDoc.ref.set(defaultSettings);
@@ -32,7 +33,11 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
     return;
   }
 
-  sendSuccess(res, userDoc.data());
+  const raw = userDoc.data() as Record<string, unknown>;
+  const categories = Array.isArray(raw.categories)
+    ? raw.categories.filter((x): x is string => typeof x === 'string')
+    : [];
+  sendSuccess(res, { ...raw, categories });
 }));
 
 router.put('/', authMiddleware, asyncHandler(async (req, res) => {

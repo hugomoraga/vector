@@ -7,7 +7,21 @@ export type DayOfWeek =
   | 'saturday'
   | 'sunday';
 
+/** Mon → Sun (calendar UI order). */
+export const DAYS_OF_WEEK_ORDER: readonly DayOfWeek[] = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+
 export type TimeSlot = 'morning' | 'afternoon' | 'evening';
+
+/** `daily` = every day; `weekly` = only on `days`. */
+export type RoutineFrequency = 'daily' | 'weekly';
 
 export type Priority = 'low' | 'medium' | 'high';
 
@@ -26,6 +40,8 @@ export interface RoutineStep {
 }
 
 export interface RoutineRule {
+  /** When set, controls how `days` is interpreted. Omitted = legacy (empty days = every day). */
+  frequency?: RoutineFrequency;
   days: DayOfWeek[];
   slot: TimeSlot;
   stepOverrides: { stepId: string; name: string }[];
@@ -89,6 +105,8 @@ export interface UserSettings {
   reminderTimes: ReminderTime[];
   retentionDays: number;
   theme: 'dark' | 'light' | 'system';
+  /** Saved category names for routines/backlog (also extended when you save items). */
+  categories?: string[];
 }
 
 export interface User {

@@ -1,12 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { CategoryField } from '@/components/CategoryField';
 import { api } from '@/lib/api';
+import { mergeCategorySuggestions } from '@/lib/categorySuggestions';
+import { DAYS_OF_WEEK_ORDER, type DayOfWeek, type TimeSlot } from '@vector/types';
+
+const DAY_LABEL: Record<DayOfWeek, string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun',
+};
+
+const WEEKDAYS: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+function formatRoutineSchedule(routine: { rules?: unknown[] }): string {
+  const rule = routine.rules?.[0] as
+    | { frequency?: string; days?: DayOfWeek[]; slot?: string }
+    | undefined;
+  if (!rule) return '';
+  const slot = rule.slot || 'morning';
+  if (rule.frequency === 'daily') {
+    return `Every day · ${slot}`;
+  }
+  if (rule.frequency === 'weekly' && rule.days?.length) {
+    return `${rule.days.map(d => DAY_LABEL[d] ?? d).join(', ')} · ${slot}`;
+  }
+  if (!rule.frequency && (!rule.days || rule.days.length === 0)) {
+    return `Every day · ${slot}`;
+  }
+  if (rule.days?.length) {
+    return `${rule.days.map(d => DAY_LABEL[d] ?? d).join(', ')} · ${slot}`;
+  }
+  return `${slot}`;
+}
 
 export default function RoutinesPage() {
   const { user, loading } = useAuth();
   const [routines, setRoutines] = useState<any[]>([]);
+  const [userSettings, setUserSettings] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -14,7 +51,9 @@ export default function RoutinesPage() {
     category: '',
     description: '',
     steps: [{ id: '1', name: '', order: 0, isOptional: false }],
-    rules: [{ days: [], slot: 'morning', stepOverrides: [] }],
+    scheduleFrequency: 'daily' as 'daily' | 'weekly',
+    scheduleDays: [] as DayOfWeek[],
+    scheduleSlot: 'morning' as TimeSlot,
   });
   const [saving, setSaving] = useState(false);
 
@@ -33,8 +72,9 @@ export default function RoutinesPage() {
   const loadRoutines = async () => {
     setLoadingData(true);
     try {
-      const data = await api.routines.list();
-      setRoutines(data);
+      const [routineList, settings] = await Promise.all([api.routines.list(), api.settings.get()]);
+      setRoutines(routineList);
+      setUserSettings(settings);
     } catch (error) {
       console.error('Failed to load:', error);
     } finally {
@@ -42,24 +82,54 @@ export default function RoutinesPage() {
     }
   };
 
+  const categorySuggestions = useMemo(
+    () =>
+      mergeCategorySuggestions(
+        userSettings?.categories,
+        routines.map((r: { category?: string }) => r.category),
+      ),
+    [userSettings?.categories, routines],
+  );
+
   const handleSave = async () => {
     if (!formData.name || !formData.category) return;
+    if (formData.scheduleFrequency === 'weekly' && formData.scheduleDays.length === 0) return;
 
     setSaving(true);
     try {
+      const steps = formData.steps.filter(s => s.name.trim());
+      const rules = [
+        {
+          frequency: formData.scheduleFrequency,
+          days: formData.scheduleFrequency === 'daily' ? [] : [...formData.scheduleDays],
+          slot: formData.scheduleSlot,
+          stepOverrides: [] as { stepId: string; name: string }[],
+        },
+      ];
       const routine = {
-        ...formData,
-        status: 'active',
-        steps: formData.steps.filter(s => s.name.trim()),
+        name: formData.name,
+        category: formData.category,
+        description: formData.description,
+        status: 'active' as const,
+        steps,
+        rules,
       };
       await api.routines.create(routine);
+      try {
+        const settings = await api.settings.get();
+        setUserSettings(settings);
+      } catch {
+        /* ignore */
+      }
       setShowForm(false);
       setFormData({
         name: '',
         category: '',
         description: '',
         steps: [{ id: '1', name: '', order: 0, isOptional: false }],
-        rules: [{ days: [], slot: 'morning', stepOverrides: [] }],
+        scheduleFrequency: 'daily',
+        scheduleDays: [],
+        scheduleSlot: 'morning',
       });
       loadRoutines();
     } catch (error) {
@@ -123,16 +193,14 @@ export default function RoutinesPage() {
                   placeholder="e.g., Morning Skincare"
                 />
               </div>
-              <div>
-                <label className="input-label">Category</label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="input"
-                  placeholder="e.g., Skincare"
-                />
-              </div>
+              <CategoryField
+                id="routine-category"
+                label="Category"
+                value={formData.category}
+                onChange={category => setFormData({ ...formData, category })}
+                suggestions={categorySuggestions}
+                placeholder="e.g., Skincare"
+              />
             </div>
 
             <div>
@@ -189,10 +257,111 @@ export default function RoutinesPage() {
               </button>
             </div>
 
+            <div>
+              <label className="input-label mb-2">Schedule</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={formData.scheduleFrequency === 'daily' ? 'chip-success' : 'chip'}
+                  onClick={() => setFormData({ ...formData, scheduleFrequency: 'daily' })}
+                >
+                  Every day
+                </button>
+                <button
+                  type="button"
+                  className={formData.scheduleFrequency === 'weekly' ? 'chip-success' : 'chip'}
+                  onClick={() => setFormData({ ...formData, scheduleFrequency: 'weekly' })}
+                >
+                  Weekly (pick days)
+                </button>
+              </div>
+
+              {formData.scheduleFrequency === 'weekly' && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {DAYS_OF_WEEK_ORDER.map(d => {
+                      const on = formData.scheduleDays.includes(d);
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          className={on ? 'chip-success min-w-[2.75rem]' : 'chip min-w-[2.75rem]'}
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              scheduleDays: on
+                                ? formData.scheduleDays.filter(x => x !== d)
+                                : [...formData.scheduleDays, d],
+                            })
+                          }
+                        >
+                          {DAY_LABEL[d]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="btn-ghost text-caption"
+                      onClick={() => setFormData({ ...formData, scheduleDays: [...WEEKDAYS] })}
+                    >
+                      Mon–Fri
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost text-caption"
+                      onClick={() =>
+                        setFormData({ ...formData, scheduleDays: [...DAYS_OF_WEEK_ORDER] as DayOfWeek[] })
+                      }
+                    >
+                      All 7 days
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost text-caption"
+                      onClick={() => setFormData({ ...formData, scheduleDays: [] })}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  {formData.scheduleDays.length === 0 && (
+                    <p className="text-caption text-[var(--error)]">Select at least one day.</p>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-4">
+                <label className="input-label" htmlFor="routine-slot">
+                  Time band
+                </label>
+                <select
+                  id="routine-slot"
+                  className="input mt-1"
+                  value={formData.scheduleSlot}
+                  onChange={e => setFormData({ ...formData, scheduleSlot: e.target.value as TimeSlot })}
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="evening">Evening</option>
+                </select>
+              </div>
+            </div>
+
             <div className="divider" />
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={handleSave} disabled={saving || !formData.name || !formData.category} className="btn-primary w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={
+                  saving ||
+                  !formData.name ||
+                  !formData.category ||
+                  (formData.scheduleFrequency === 'weekly' && formData.scheduleDays.length === 0)
+                }
+                className="btn-primary w-full sm:w-auto"
+              >
                 {saving ? 'Saving...' : 'Save Routine'}
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="btn-secondary w-full sm:w-auto">
@@ -231,6 +400,7 @@ export default function RoutinesPage() {
                     </span>
                   </div>
                   <p className="text-caption text-tertiary mt-0.5">{routine.category}</p>
+                  <p className="text-caption text-muted mt-0.5">{formatRoutineSchedule(routine)}</p>
                   {routine.description && (
                     <p className="text-body-sm text-secondary mt-2">{routine.description}</p>
                   )}

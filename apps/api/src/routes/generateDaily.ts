@@ -4,7 +4,7 @@ import { internalJobAuthMiddleware } from '../middleware/internalJobAuth';
 import { sendSuccess } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
-import { getTodayDayOfWeek, getTodayDateString } from '@vector/utils';
+import { getTodayDayOfWeek, getTodayDateString, routineRuleAppliesOnDay } from '@vector/utils';
 import type { DailyItem, Routine } from '@vector/types';
 
 const router = Router();
@@ -28,8 +28,12 @@ router.post('/', asyncHandler(async (req, res) => {
 
     for (const routineDoc of routinesSnapshot.docs) {
       const routine = routineDoc.data() as Routine;
+      const rules = Array.isArray(routine.rules) ? routine.rules : [];
+      const matchingRule = rules.find(rule => routineRuleAppliesOnDay(rule, todayDOW));
 
-      const matchingRule = routine.rules.find(rule => rule.days.includes(todayDOW));
+      if (!matchingRule) {
+        continue;
+      }
 
       for (const step of routine.steps) {
         const existingQuery = await db.collection(FIRESTORE_COLLECTIONS.DAILY_ITEMS)

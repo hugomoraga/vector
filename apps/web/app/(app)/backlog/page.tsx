@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { CategoryField } from '@/components/CategoryField';
 import { api } from '@/lib/api';
+import { mergeCategorySuggestions } from '@/lib/categorySuggestions';
 
 const PRIORITY_STYLES: Record<string, string> = {
   high: 'chip-error',
@@ -13,6 +15,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 export default function BacklogPage() {
   const { user, loading } = useAuth();
   const [items, setItems] = useState<any[]>([]);
+  const [userSettings, setUserSettings] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,6 +23,7 @@ export default function BacklogPage() {
     title: '',
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
+    category: '',
   });
 
   useEffect(() => {
@@ -37,14 +41,24 @@ export default function BacklogPage() {
   const loadBacklog = async () => {
     setLoadingData(true);
     try {
-      const data = await api.backlog.list();
+      const [data, settings] = await Promise.all([api.backlog.list(), api.settings.get()]);
       setItems(data);
+      setUserSettings(settings);
     } catch (error) {
       console.error('Failed to load:', error);
     } finally {
       setLoadingData(false);
     }
   };
+
+  const categorySuggestions = useMemo(
+    () =>
+      mergeCategorySuggestions(
+        userSettings?.categories,
+        items.map((i: { category?: string }) => i.category),
+      ),
+    [userSettings?.categories, items],
+  );
 
   const promoteToToday = async (id: string) => {
     try {
@@ -59,13 +73,21 @@ export default function BacklogPage() {
     if (!formData.title.trim()) return;
     setSaving(true);
     try {
+      const cat = formData.category.trim();
       await api.backlog.create({
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
         priority: formData.priority,
+        ...(cat ? { category: cat } : {}),
       });
+      try {
+        const settings = await api.settings.get();
+        setUserSettings(settings);
+      } catch {
+        /* ignore */
+      }
       setShowForm(false);
-      setFormData({ title: '', description: '', priority: 'medium' });
+      setFormData({ title: '', description: '', priority: 'medium', category: '' });
       await loadBacklog();
     } catch (error) {
       console.error('Failed to create:', error);
@@ -141,6 +163,13 @@ export default function BacklogPage() {
                 <option value="high">High</option>
               </select>
             </div>
+            <CategoryField
+              id="backlog-category"
+              label="Category (optional)"
+              value={formData.category}
+              onChange={category => setFormData({ ...formData, category })}
+              suggestions={categorySuggestions}
+            />
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button type="button" className="btn-secondary order-2 sm:order-1" onClick={() => setShowForm(false)}>
                 Cancel
@@ -186,6 +215,7 @@ export default function BacklogPage() {
                     <p className="text-body-sm text-secondary mt-1">{item.description}</p>
                   )}
                   <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {item.category && <span className="chip">{item.category}</span>}
                     {item.priority && (
                       <span className={PRIORITY_STYLES[item.priority] || 'chip'}>
                         {item.priority}

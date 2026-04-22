@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendError } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
+import { recordUserCategory } from '../lib/userCategories';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
 import type { BacklogItem } from '@vector/types';
 
@@ -74,6 +75,9 @@ router.post('/', asyncHandler(async (req, res) => {
   ) as Omit<BacklogItem, 'id'>;
 
   const docRef = await db.collection(FIRESTORE_COLLECTIONS.BACKLOG).add(item);
+  if (category != null) {
+    await recordUserCategory(uid, category);
+  }
 
   sendCreated(res, { id: docRef.id, ...item });
 }));
@@ -99,6 +103,10 @@ router.put('/:id', asyncHandler(async (req, res) => {
     ...cleaned,
     updatedAt: new Date().toISOString(),
   });
+
+  if (cleaned.category != null) {
+    await recordUserCategory(uid, cleaned.category);
+  }
 
   const updatedDoc = await docRef.get();
   sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() });

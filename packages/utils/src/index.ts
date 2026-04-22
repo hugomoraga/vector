@@ -1,4 +1,4 @@
-import type { DayOfWeek, TimeSlot } from '@vector/types';
+import type { DayOfWeek, RoutineRule, TimeSlot } from '@vector/types';
 
 export const DAY_MAP: Record<number, DayOfWeek> = {
   0: 'sunday',
@@ -13,6 +13,17 @@ export const DAY_MAP: Record<number, DayOfWeek> = {
 export function getTodayDayOfWeek(): DayOfWeek {
   const dayIndex = new Date().getDay();
   return DAY_MAP[dayIndex];
+}
+
+/**
+ * Whether this rule applies on a given weekday.
+ * Legacy rules (no `frequency`): empty `days` = every day; otherwise weekly by `days`.
+ */
+export function routineRuleAppliesOnDay(rule: RoutineRule, day: DayOfWeek): boolean {
+  if (rule.frequency === 'daily') return true;
+  if (rule.frequency === 'weekly') return rule.days.length > 0 && rule.days.includes(day);
+  if (rule.days.length === 0) return true;
+  return rule.days.includes(day);
 }
 
 export function getDayOfWeek(date: Date): DayOfWeek {

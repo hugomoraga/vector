@@ -3,6 +3,31 @@ variable "project_id" {
   description = "GCP Project ID"
 }
 
+# Billing budget (optional). Set billing_account_id and terraform_billing_budget to manage budgets via Terraform.
+variable "billing_account_id" {
+  type        = string
+  description = "GCP billing account id (01xxxx-xxxxxx-xxxxx). Used only when terraform_billing_budget is true; leave empty to skip."
+  default     = ""
+}
+
+variable "terraform_billing_budget" {
+  type        = bool
+  description = "If true (and billing_account_id is set), enables cloudbillingbudgets.googleapis.com and creates google_billing_budget. Set false if Service Usage returns 403 for that API; use Cloud Console → Billing → Budgets instead."
+  default     = false
+}
+
+variable "billing_budget_amount_usd" {
+  type        = number
+  description = "Monthly budget in whole USD. Alerts use billing_budget_alert_threshold_percent of this amount."
+  default     = 10
+}
+
+variable "billing_budget_alert_threshold_percent" {
+  type        = number
+  description = "First alert when actual spend reaches this fraction of the monthly budget (0.5 = 50%, e.g. $5 of $10)."
+  default     = 0.5
+}
+
 variable "region" {
   type        = string
   default     = "us-central1"
@@ -19,6 +44,20 @@ variable "github_repo" {
   type        = string
   default     = "hugomoraga/vector"
   description = "GitHub repository in owner/repo format for WIF"
+}
+
+# Lets named users enable/disable GCP APIs (e.g. cloudbillingbudgets) without full Editor/Owner.
+# First apply must run as a principal that can set project IAM (Owner or roles/resourcemanager.projectIamAdmin).
+variable "service_usage_admin_users" {
+  type        = list(string)
+  description = "Google account emails granted roles/serviceusage.serviceUsageAdmin on this project (bare email, no user: prefix)."
+  default     = []
+}
+
+variable "grant_github_deploy_sa_service_usage_admin" {
+  type        = bool
+  description = "If true, grants roles/serviceusage.serviceUsageAdmin to the GitHub Actions deploy service account (needed for terraform apply in CI to enable new APIs)."
+  default     = false
 }
 
 variable "telegram_bot_token_secret" {

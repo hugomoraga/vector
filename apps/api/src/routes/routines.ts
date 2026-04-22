@@ -3,6 +3,8 @@ import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendError } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
+import { parseRoutineRules } from '../lib/routineRules';
+import { recordUserCategory } from '../lib/userCategories';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
 import type { Routine } from '@vector/types';
 
@@ -53,6 +55,12 @@ router.post('/', asyncHandler(async (req, res) => {
     return;
   }
 
+  const { rules: parsedRules, error: rulesError } = parseRoutineRules(rules);
+  if (rulesError) {
+    sendError(res, rulesError);
+    return;
+  }
+
   const now = new Date().toISOString();
   const routine: Omit<Routine, 'id'> = {
     userId: uid,
@@ -61,12 +69,13 @@ router.post('/', asyncHandler(async (req, res) => {
     status: 'active',
     description,
     steps: steps || [],
-    rules: rules || [],
+    rules: parsedRules,
     createdAt: now,
     updatedAt: now,
   };
 
   const docRef = await db.collection(FIRESTORE_COLLECTIONS.ROUTINES).add(routine);
+  await recordUserCategory(uid, category);
 
   sendCreated(res, { id: docRef.id, ...routine });
 }));
@@ -74,7 +83,7 @@ router.post('/', asyncHandler(async (req, res) => {
 router.put('/:id', asyncHandler(async (req, res) => {
   const { uid } = (req as any).user;
   const { id } = req.params;
-  const updates = req.body;
+  const updates = req.body as Record<string, unknown>;
 
   const docRef = db.collection(FIRESTORE_COLLECTIONS.ROUTINES).doc(id);
   const doc = await docRef.get();
@@ -84,10 +93,24 @@ router.put('/:id', asyncHandler(async (req, res) => {
     return;
   }
 
+  let payload = { ...updates };
+  if (updates.rules !== undefined) {
+    const { rules: parsedRules, error: rulesError } = parseRoutineRules(updates.rules);
+    if (rulesError) {
+      sendError(res, rulesError);
+      return;
+    }
+    payload = { ...payload, rules: parsedRules };
+  }
+
   await docRef.update({
-    ...updates,
+    ...payload,
     updatedAt: new Date().toISOString(),
   });
+
+  if (updates?.category != null) {
+    await recordUserCategory(uid, updates.category);
+  }
 
   const updatedDoc = await docRef.get();
   sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() });

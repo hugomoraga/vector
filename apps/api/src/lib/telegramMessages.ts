@@ -1,4 +1,5 @@
 import { ENV } from '@vector/config';
+import { webAppTodayUrl } from './webAppUrl';
 
 /** Placeholder in TELEGRAM_MSG_WELCOME_PLAIN for the numeric Telegram chat id. */
 const CHAT_ID_PLACEHOLDER = '{{chatId}}';
@@ -16,10 +17,12 @@ export function telegramWelcomePlainMessage(chatId: number): string {
 }
 
 export function telegramWelcomeLinkedMessage(): string {
-  return (
+  const url = webAppTodayUrl();
+  const tail = url ? `\n\n${url}` : '';
+  const body =
     ENV.TELEGRAM_MSG_WELCOME_LINKED ||
-    'Vector is linked. You will receive reminders here. You can close Telegram and return to the app.'
-  );
+    'Vector is linked. You will receive reminders here. You can close Telegram and return to the app.';
+  return `${body}${tail}`;
 }
 
 export function telegramLinkInvalidMessage(): string {

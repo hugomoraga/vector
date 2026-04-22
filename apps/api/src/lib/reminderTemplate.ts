@@ -1,6 +1,7 @@
 import type { TimeSlot } from '@vector/types';
 import { ENV } from '@vector/config';
 import defaultTemplateJson from '../config/reminder-template.default.json';
+import { webAppTodayUrl } from './webAppUrl';
 
 export type ReminderParseMode = 'HTML';
 
@@ -162,7 +163,16 @@ export function buildReminderMessage(
     text += applyVars(template.taskLine, lineVars);
   }
 
-  text += applyVars(template.footer, { date: headerVars.date, count });
+  const todayUrl = webAppTodayUrl();
+  const todayLinkBlock = todayUrl
+    ? `\n\n<a href="${escapeHtml(todayUrl)}">Abrir tareas pendientes</a>`
+    : '\n\n<i>Abre Vector en la web (Hoy) para marcarlas.</i>';
+
+  text += applyVars(template.footer, {
+    date: headerVars.date,
+    count,
+    today_link_block: todayLinkBlock,
+  });
 
   return { text, parseMode: template.parseMode };
 }

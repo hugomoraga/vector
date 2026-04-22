@@ -12,5 +12,5 @@
   },
   "header": "<b>📋 Vector — pendientes de hoy</b> (<code>{date}</code>)\n\nTienes <b>{count}</b> tarea(s) por hacer:\n",
   "taskLine": "{slot_emoji} <b>{slot_label}</b>\n<code>{title}</code>\n\n",
-  "footer": "<i>Ábrelas en la app y márcalas cuando termines.</i>"
+  "footer": "<i>Ábrelas en la app y márcalas cuando termines.</i>{today_link_block}"
 }

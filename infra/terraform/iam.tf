@@ -82,3 +82,18 @@ resource "google_service_account_iam_member" "gh_wif_binding" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repo}"
 }
+
+# Enable/disable APIs (gcloud services enable / Terraform google_project_service) without full Owner.
+resource "google_project_iam_member" "service_usage_admin_users" {
+  for_each = toset(var.service_usage_admin_users)
+  project  = var.project_id
+  role     = "roles/serviceusage.serviceUsageAdmin"
+  member   = "user:${each.value}"
+}
+
+resource "google_project_iam_member" "github_deploy_service_usage_admin" {
+  count   = var.grant_github_deploy_sa_service_usage_admin ? 1 : 0
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageAdmin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
