@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { CategoryField } from '@/components/CategoryField';
 import { api } from '@/lib/api';
@@ -107,6 +107,15 @@ export default function RoutinesPage() {
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyFormState);
   const [saving, setSaving] = useState(false);
+  const formCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showForm) return;
+    const frame = requestAnimationFrame(() => {
+      formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [showForm, editingRoutineId]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -242,7 +251,7 @@ export default function RoutinesPage() {
 
       {/* Create form */}
       {showForm && (
-        <div className="card mb-6 sm:mb-8">
+        <div ref={formCardRef} className="card mb-6 scroll-mt-24 sm:mb-8 md:scroll-mt-0">
           <h2 className="mb-4 text-subheading sm:mb-5">
             {editingRoutineId ? 'Edit routine' : 'Create routine'}
           </h2>
