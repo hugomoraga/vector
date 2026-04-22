@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -13,6 +13,9 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "validate": "turbo run lint typecheck",
+    "docker:api": "docker build -f apps/api/Dockerfile -t vector-api:local .",
+    "docker:web": "bash scripts/docker-web-build.sh",
+    "docker:web:smoke": "bash scripts/docker-web-smoke.sh",
     "prepare": "husky"
   },
   "devDependencies": {

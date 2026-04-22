@@ -18,8 +18,8 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy everything needed for build
-COPY package.json turbo.json tsconfig.base.json ./
+# Copy everything needed for build (lockfile required for Turbo + npm workspaces)
+COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY packages/ packages/
 COPY apps/web/ apps/web/
 
@@ -41,7 +41,7 @@ ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SEN
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 
 RUN npx turbo build --filter=@vector/web \
-  && test -f apps/web/.next/standalone/apps/web/server.js
+  && (test -f apps/web/.next/standalone/apps/web/server.js || test -f apps/web/.next/standalone/server.js)
 
 # ─── Stage 3: Production ───────────────────────
 FROM node:22-alpine AS runner
