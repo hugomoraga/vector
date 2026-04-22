@@ -31,9 +31,11 @@ resource "google_cloud_run_v2_service" "api" {
         value = "production"
       }
 
+      # Always point at the web Cloud Run URL (not "*"). TELEGRAM_REMINDER_TEMPLATE / deep links use
+      # CORS_ORIGIN via webAppTodayUrl(); "*" would suppress the "Abrir tareas pendientes" link.
       env {
         name  = "CORS_ORIGIN"
-        value = var.web_image != "" ? google_cloud_run_v2_service.web.uri : "*"
+        value = google_cloud_run_v2_service.web.uri
       }
 
       # Firebase project config
@@ -121,6 +123,15 @@ resource "google_cloud_run_v2_service" "api" {
   }
 
   depends_on = [google_project_service.apis]
+
+  # GitHub Actions / gcloud set revision labels and client metadata; Terraform would strip them every apply.
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].labels,
+    ]
+  }
 }
 
 # Allow unauthenticated access (public API)
@@ -168,6 +179,14 @@ resource "google_cloud_run_v2_service" "web" {
   }
 
   depends_on = [google_project_service.apis]
+
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].labels,
+    ]
+  }
 }
 
 # Allow unauthenticated access (public web)

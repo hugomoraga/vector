@@ -21,7 +21,7 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
 
   const snapshot = await query.get();
   const items: DailyItem[] = [];
-  snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() } as DailyItem));
+  snapshot.forEach(doc => items.push({ ...doc.data(), id: doc.id } as DailyItem));
 
   items.sort((a, b) => {
     const slotOrder = { morning: 0, afternoon: 1, evening: 2 };
@@ -42,7 +42,7 @@ router.get('/:id', authMiddleware, asyncHandler(async (req, res) => {
     return;
   }
 
-  sendSuccess(res, { id: doc.id, ...doc.data() } as DailyItem);
+  sendSuccess(res, { ...doc.data(), id: doc.id } as DailyItem);
 }));
 
 router.patch('/:id', authMiddleware, asyncHandler(async (req, res) => {
@@ -64,7 +64,7 @@ router.patch('/:id', authMiddleware, asyncHandler(async (req, res) => {
   });
 
   const updatedDoc = await docRef.get();
-  sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() });
+  sendSuccess(res, { ...updatedDoc.data(), id: updatedDoc.id });
 }));
 
 router.post('/promote/:backlogId', authMiddleware, asyncHandler(async (req, res) => {

@@ -29,7 +29,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
   const snapshot = await query.get();
   const items: BacklogItem[] = [];
-  snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() } as BacklogItem));
+  snapshot.forEach(doc => items.push({ ...doc.data(), id: doc.id } as BacklogItem));
 
   sendSuccess(res, items);
 }));
@@ -45,7 +45,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
     return;
   }
 
-  sendSuccess(res, { id: doc.id, ...doc.data() } as BacklogItem);
+  sendSuccess(res, { ...doc.data(), id: doc.id } as BacklogItem);
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
@@ -109,7 +109,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
   }
 
   const updatedDoc = await docRef.get();
-  sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() });
+  sendSuccess(res, { ...updatedDoc.data(), id: updatedDoc.id });
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
