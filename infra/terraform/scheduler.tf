@@ -2,8 +2,9 @@
 # All times in Chile (America/Santiago) timezone
 #
 # Cloud Run allows unauthenticated invoke (allUsers run.invoker). Job auth is app-level, same value
-# as INTERNAL_JOB_SECRET (from Secret Manager). We send both a header and a JSON body: some setups
-# drop custom headers; body + Content-Type: application/json is reliable for Cloud Scheduler.
+# as INTERNAL_JOB_SECRET (from Secret Manager). Auth is sent only in the JSON body (internalJobSecret):
+# if we also put the secret in http_target.headers, the Scheduler API often omits it on read → Terraform
+# would plan the same header update forever. Content-Type stays in headers; the API accepts the body.
 
 data "google_secret_manager_secret_version" "internal_job_scheduler" {
   count  = var.internal_job_secret != "" ? 1 : 0
@@ -14,8 +15,7 @@ locals {
   scheduler_job_secret = length(data.google_secret_manager_secret_version.internal_job_scheduler) > 0 ? data.google_secret_manager_secret_version.internal_job_scheduler[0].secret_data : null
 
   scheduler_internal_headers = local.scheduler_job_secret != null ? {
-    "Content-Type"        = "application/json"
-    "X-Vector-Job-Secret" = local.scheduler_job_secret
+    "Content-Type" = "application/json"
   } : {}
 
   # Cloud Scheduler http_target.body must be base64-encoded (JSON with internalJobSecret).
