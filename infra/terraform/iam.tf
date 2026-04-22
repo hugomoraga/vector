@@ -17,7 +17,9 @@ resource "google_project_iam_member" "api_firestore" {
 }
 
 resource "google_project_iam_member" "api_secrets" {
-  count   = var.telegram_bot_token_secret != "" ? 1 : 0
+  count = (
+    var.telegram_bot_token_secret != "" || var.telegram_webhook_secret != ""
+  ) ? 1 : 0
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.api.email}"

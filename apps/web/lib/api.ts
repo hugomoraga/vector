@@ -91,5 +91,10 @@ export const api = {
   settings: {
     get: () => request<any>('/api/settings'),
     update: (data: any) => request<any>('/api/settings', { method: 'PUT', body: data }),
+    createTelegramLink: () =>
+      request<{ deepLink: string; expiresInSeconds: number; linkVersion: number }>(
+        '/api/settings/telegram-link',
+        { method: 'POST' },
+      ),
   },
 };

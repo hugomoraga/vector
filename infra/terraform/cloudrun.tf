@@ -56,6 +56,25 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      dynamic "env" {
+        for_each = var.telegram_webhook_secret != "" ? [1] : []
+        content {
+          name = "TELEGRAM_WEBHOOK_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.telegram_webhook_secret[0].secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      # After secret-backed env blocks so Terraform plans show stable ordering (not "TOKEN -> USERNAME").
+      env {
+        name  = "TELEGRAM_BOT_USERNAME"
+        value = var.telegram_bot_username
+      }
+
       startup_probe {
         http_get {
           path = "/health"

@@ -7,6 +7,8 @@ export const ENV = {
   FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY || '',
 
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
+  TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME || '',
+  TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET || '',
 
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
 
@@ -19,6 +21,7 @@ export const FIRESTORE_COLLECTIONS = {
   BACKLOG: 'backlog',
   DAILY_ITEMS: 'dailyItems',
   USERS: 'users',
+  TELEGRAM_LINK_TOKENS: 'telegramLinkTokens',
 } as const;
 
 export const API_ROUTES = {

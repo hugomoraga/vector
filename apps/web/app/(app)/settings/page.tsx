@@ -1,14 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { api } from '@/lib/api';
+
+const LINK_POLL_MS = 2000;
+const LINK_POLL_MAX_MS = 5 * 60 * 1000;
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const [settings, setSettings] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [chatIdDraft, setChatIdDraft] = useState('');
+  const [telegramLinking, setTelegramLinking] = useState(false);
+  const [telegramLinkError, setTelegramLinkError] = useState<string | null>(null);
+  const telegramLinkTargetVersionRef = useRef(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -64,6 +70,59 @@ export default function SettingsPage() {
     return () => window.clearTimeout(t);
   }, [chatIdDraft, settings?.telegramEnabled, settings?.telegramChatId, saveChatIdDebounced]);
 
+  useEffect(() => {
+    if (!telegramLinking) return;
+
+    const started = Date.now();
+    const target = telegramLinkTargetVersionRef.current;
+
+    const tick = async () => {
+      try {
+        const data = await api.settings.get();
+        setSettings(data);
+        const last = data?.telegramLastLinkedVersion ?? 0;
+        if (last >= target && target > 0) {
+          setTelegramLinking(false);
+          setTelegramLinkError(null);
+          setChatIdDraft(data?.telegramChatId || '');
+          telegramLinkTargetVersionRef.current = 0;
+          return;
+        }
+      } catch {
+        /* keep polling */
+      }
+      if (Date.now() - started > LINK_POLL_MAX_MS) {
+        setTelegramLinking(false);
+        setTelegramLinkError('Timed out waiting for Telegram. Try Connect again.');
+        telegramLinkTargetVersionRef.current = 0;
+        try {
+          await api.settings.update({ telegramLinkPending: false });
+          const data = await api.settings.get();
+          setSettings(data);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+
+    const id = window.setInterval(() => void tick(), LINK_POLL_MS);
+    void tick();
+    return () => window.clearInterval(id);
+  }, [telegramLinking]);
+
+  const connectTelegram = async () => {
+    setTelegramLinkError(null);
+    try {
+      const { deepLink, linkVersion } = await api.settings.createTelegramLink();
+      telegramLinkTargetVersionRef.current = linkVersion;
+      setTelegramLinking(true);
+      window.open(deepLink, '_blank', 'noopener,noreferrer');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Could not start Telegram link';
+      setTelegramLinkError(msg);
+    }
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -108,16 +167,40 @@ export default function SettingsPage() {
                 </label>
 
                 {settings?.telegramEnabled && (
-                  <div>
-                    <label className="input-label">Chat ID</label>
-                    <input
-                      type="text"
-                      value={chatIdDraft}
-                      onChange={(e) => setChatIdDraft(e.target.value)}
-                      placeholder="Your Telegram Chat ID"
-                      className="input"
-                    />
-                    <p className="text-caption text-muted mt-1.5">Saved automatically after you pause typing</p>
+                  <div className="space-y-4">
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => void connectTelegram()}
+                        disabled={telegramLinking}
+                        className="btn-primary"
+                      >
+                        {telegramLinking ? 'Waiting for Telegram…' : 'Connect Telegram'}
+                      </button>
+                      <p className="text-caption text-muted mt-1.5">
+                        Opens Telegram with a secure link. After you tap Start, this page will update automatically.
+                      </p>
+                      {telegramLinkError && (
+                        <p className="text-caption mt-1.5 text-[var(--error)]" role="alert">
+                          {telegramLinkError}
+                        </p>
+                      )}
+                    </div>
+
+                    <details className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+                      <summary className="cursor-pointer text-body-sm text-secondary">Advanced: enter chat ID manually</summary>
+                      <div className="mt-3">
+                        <label className="input-label">Chat ID</label>
+                        <input
+                          type="text"
+                          value={chatIdDraft}
+                          onChange={(e) => setChatIdDraft(e.target.value)}
+                          placeholder="Your Telegram Chat ID"
+                          className="input"
+                        />
+                        <p className="text-caption text-muted mt-1.5">Saved automatically after you pause typing</p>
+                      </div>
+                    </details>
                   </div>
                 )}
               </div>

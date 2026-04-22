@@ -80,6 +80,11 @@ export interface ReminderTime {
 
 export interface UserSettings {
   telegramChatId?: string;
+  telegramLinkPending?: boolean;
+  /** Incremented each time the user starts a Telegram link from Settings. */
+  telegramLinkVersion?: number;
+  /** Set to the link token’s version when a link completes in the webhook. */
+  telegramLastLinkedVersion?: number;
   telegramEnabled: boolean;
   reminderTimes: ReminderTime[];
   retentionDays: number;

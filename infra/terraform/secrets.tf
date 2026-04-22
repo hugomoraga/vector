@@ -15,3 +15,21 @@ resource "google_secret_manager_secret_version" "telegram_bot_token" {
   secret      = google_secret_manager_secret.telegram_bot_token[0].id
   secret_data = var.telegram_bot_token_secret
 }
+
+# ── Telegram webhook secret ─────────────────────
+resource "google_secret_manager_secret" "telegram_webhook_secret" {
+  count     = var.telegram_webhook_secret != "" ? 1 : 0
+  secret_id = "telegram-webhook-secret"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret_version" "telegram_webhook_secret" {
+  count       = var.telegram_webhook_secret != "" ? 1 : 0
+  secret      = google_secret_manager_secret.telegram_webhook_secret[0].id
+  secret_data = var.telegram_webhook_secret
+}

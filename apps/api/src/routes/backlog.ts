@@ -57,19 +57,21 @@ router.post('/', asyncHandler(async (req, res) => {
   }
 
   const now = new Date().toISOString();
-  const item: Omit<BacklogItem, 'id'> = {
-    userId: uid,
-    title,
-    description,
-    priority: priority || 'medium',
-    status: 'pending',
-    category,
-    targetDate,
-    energyLevel,
-    estimatedMinutes,
-    createdAt: now,
-    updatedAt: now,
-  };
+  const item = Object.fromEntries(
+    Object.entries({
+      userId: uid,
+      title,
+      description,
+      priority: priority || 'medium',
+      status: 'pending' as const,
+      category,
+      targetDate,
+      energyLevel,
+      estimatedMinutes,
+      createdAt: now,
+      updatedAt: now,
+    }).filter(([, v]) => v !== undefined),
+  ) as Omit<BacklogItem, 'id'>;
 
   const docRef = await db.collection(FIRESTORE_COLLECTIONS.BACKLOG).add(item);
 
@@ -89,8 +91,12 @@ router.put('/:id', asyncHandler(async (req, res) => {
     return;
   }
 
+  const cleaned = Object.fromEntries(
+    Object.entries(updates as Record<string, unknown>).filter(([, v]) => v !== undefined),
+  );
+
   await docRef.update({
-    ...updates,
+    ...cleaned,
     updatedAt: new Date().toISOString(),
   });
 

@@ -28,6 +28,19 @@ variable "telegram_bot_token_secret" {
   default     = ""
 }
 
+variable "telegram_bot_username" {
+  type        = string
+  description = "Telegram bot @handle without @ (for t.me deep links)"
+  default     = ""
+}
+
+variable "telegram_webhook_secret" {
+  type        = string
+  description = "Secret token for Telegram setWebhook (X-Telegram-Bot-Api-Secret-Token)"
+  sensitive   = true
+  default     = ""
+}
+
 # ── Image tags (set by CI/CD) ──────────────────
 variable "api_image" {
   type        = string
