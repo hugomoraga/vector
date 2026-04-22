@@ -1,0 +1,16 @@
+{
+  "parseMode": "HTML",
+  "slotLabels": {
+    "morning": "Mañana",
+    "afternoon": "Tarde",
+    "evening": "Noche"
+  },
+  "slotEmoji": {
+    "morning": "🌅",
+    "afternoon": "☀️",
+    "evening": "🌙"
+  },
+  "header": "<b>🗓 Hoy {date}</b>\nQuedan <b>{count}</b> pendiente(s):\n",
+  "taskLine": "▫️ {slot_emoji} <b>{slot_label}</b>\n   └ <code>{title}</code>\n",
+  "footer": "\n<i>— Vector</i>"
+}

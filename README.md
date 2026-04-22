@@ -72,6 +72,18 @@ Los mensajes que envía el webhook al vincular o al saludar sin token se pueden 
 
 Si las omites, se usan los textos por defecto definidos en [`apps/api/src/lib/telegramMessages.ts`](apps/api/src/lib/telegramMessages.ts). En `.env`, líneas largas pueden usar `\n` para saltos de línea.
 
+### Telegram (recordatorios `/send-reminders`)
+
+El job que envía pendientes del día usa **Telegram HTML**: lista cada tarea con título y franja (`morning` / `afternoon` / `evening`), no solo el número.
+
+- **Plantilla por defecto (JSON en el repo):** [`apps/api/src/config/reminder-template.default.json`](apps/api/src/config/reminder-template.default.json). Puedes editarla y volver a desplegar la API, o copiar el ejemplo en español alternativo [`apps/api/src/config/reminder-template.es.example.json`](apps/api/src/config/reminder-template.es.example.json) como base.
+- **Sobrescribir sin tocar el repo:** variable `TELEGRAM_REMINDER_TEMPLATE_JSON` con un **JSON en una línea** (o minificado) que se **fusiona** encima del default: puedes enviar solo las claves que quieras cambiar (`header`, `taskLine`, `footer`, `slotLabels`, `slotEmoji`). Si el JSON es inválido, se usa solo el default y se registra un error en logs. (Si prefieres escribir en YAML, conviértelo a JSON con `yq -o=json` o similar antes de pegarlo en la env.)
+- **Placeholders** (solo `parseMode` `HTML` soportado por ahora; `{title}` y `{slot_label}` se escapan para HTML):
+  - En `header` y `footer`: `{date}` (fecha `YYYY-MM-DD`), `{count}` (número de pendientes).
+  - En `taskLine` (una vez por tarea): `{title}`, `{slot}` (clave cruda), `{slot_label}`, `{slot_emoji}`.
+
+En Terraform, la variable opcional `telegram_reminder_template_json` en `envs/<env>.tfvars` se mapea a esa env en Cloud Run (heredoc útil para JSON multilínea). Límite práctico de Telegram: mensajes de hasta 4096 caracteres.
+
 ### Jobs internos (`POST /generate-daily`, `POST /send-reminders`)
 
 Estos endpoints recorren usuarios y no usan Firebase del cliente. Van protegidos con `INTERNAL_JOB_SECRET` (variable de entorno):
@@ -108,7 +120,7 @@ Desde la raíz del repo:
 
 `<env>` suele ser `nonprod` o `prod`. Los servicios Cloud Run se llaman `vector-api` y `vector-web`. Requiere `gcloud` autenticado cuando uses `sync-images` o cuando el wrapper sincronice imágenes en plan/apply.
 
-Para **textos del bot Telegram** en la API desplegada, define en `infra/terraform/envs/<env>.tfvars` (variables públicas, no van en `secrets.tfvars`): `telegram_msg_welcome_plain`, `telegram_msg_welcome_linked`, `telegram_msg_link_invalid`. Terraform las pasa como variables de entorno al contenedor `vector-api`. Cadenas vacías se omiten y la API usa los valores por defecto de [`apps/api/src/lib/telegramMessages.ts`](apps/api/src/lib/telegramMessages.ts). Textos multilínea en `.tfvars` puedes escribirlos con [heredoc de Terraform](https://developer.hashicorp.com/terraform/language/expressions/strings#heredoc-strings) (`<<-EOT` … `EOT`).
+Para **textos del bot Telegram** en la API desplegada, define en `infra/terraform/envs/<env>.tfvars` (variables públicas, no van en `secrets.tfvars`): `telegram_msg_welcome_plain`, `telegram_msg_welcome_linked`, `telegram_msg_link_invalid`, y opcionalmente `telegram_reminder_template_json` (plantilla de recordatorios, ver sección anterior). Terraform las pasa como variables de entorno al contenedor `vector-api`. Cadenas vacías se omiten y la API usa los valores por defecto de [`apps/api/src/lib/telegramMessages.ts`](apps/api/src/lib/telegramMessages.ts) o del JSON de recordatorios embebido. Textos multilínea en `.tfvars` puedes escribirlos con [heredoc de Terraform](https://developer.hashicorp.com/terraform/language/expressions/strings#heredoc-strings) (`<<-EOT` … `EOT`).
 
 ## Licencia
 

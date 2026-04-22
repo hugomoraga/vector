@@ -18,3 +18,6 @@ EOT
 
 telegram_msg_welcome_linked = "Vector quedó vinculado. Te avisaré aquí."
 telegram_msg_link_invalid   = "Enlace inválido o caducado. Vuelve a Ajustes y genera otro."
+
+# Opcional: plantilla JSON de recordatorios (ver README).
+# telegram_reminder_template_json = ""

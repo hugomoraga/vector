@@ -5,7 +5,9 @@ import { sendSuccess, sendError } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS, ENV } from '@vector/config';
 import { getTodayDateString } from '@vector/utils';
-import type { UserSettings } from '@vector/types';
+import type { DailyItem, UserSettings } from '@vector/types';
+import { buildReminderMessage, getReminderTemplate } from '../lib/reminderTemplate';
+import { telegramSendMessage } from '../lib/telegram';
 
 const router = Router();
 
@@ -41,26 +43,21 @@ router.post('/', asyncHandler(async (req, res) => {
       continue;
     }
 
-    const pendingCount = pendingQuery.size;
-    const message = `You have ${pendingCount} pending task${pendingCount > 1 ? 's' : ''} for today. Don't forget!`;
+    const pendingItems = pendingQuery.docs.map((d) => {
+      const row = d.data() as DailyItem;
+      return { title: row.title || 'Untitled', slot: row.slot };
+    });
+    const pendingCount = pendingItems.length;
+    const template = getReminderTemplate();
+    const { text: message, parseMode } = buildReminderMessage(template, today, pendingItems);
 
     try {
-      const telegramResponse = await fetch(`https://api.telegram.org/bot${ENV.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: settings.telegramChatId,
-          text: message,
-        }),
-      });
-
-      if (!telegramResponse.ok) {
-        throw new Error(`Telegram API error: ${telegramResponse.status}`);
-      }
+      await telegramSendMessage(settings.telegramChatId, message, { parseMode });
 
       results.push({ userId: uid, sent: true, count: pendingCount });
-    } catch (error: any) {
-      results.push({ userId: uid, sent: false, error: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      results.push({ userId: uid, sent: false, error: msg });
     }
   }
 

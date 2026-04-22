@@ -19,3 +19,8 @@ EOT
 
 telegram_msg_welcome_linked = "Vector quedó vinculado. Te avisaré aquí."
 telegram_msg_link_invalid   = "Enlace inválido o caducado. Vuelve a Ajustes y genera otro."
+
+# Opcional: JSON fusionado sobre apps/api/src/config/reminder-template.default.json (recordatorios del día).
+# telegram_reminder_template_json = <<-EOT
+# {"taskLine":"{slot_emoji} <b>{slot_label}</b>\\n<code>{title}</code>\\n\\n","footer":"<i>Listo.</i>"}
+# EOT

@@ -102,6 +102,14 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      dynamic "env" {
+        for_each = var.telegram_reminder_template_json != "" ? [var.telegram_reminder_template_json] : []
+        content {
+          name  = "TELEGRAM_REMINDER_TEMPLATE_JSON"
+          value = env.value
+        }
+      }
+
       startup_probe {
         http_get {
           path = "/health"

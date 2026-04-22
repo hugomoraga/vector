@@ -18,6 +18,12 @@ export const ENV = {
   TELEGRAM_MSG_WELCOME_LINKED: process.env.TELEGRAM_MSG_WELCOME_LINKED || '',
   TELEGRAM_MSG_LINK_INVALID: process.env.TELEGRAM_MSG_LINK_INVALID || '',
 
+  /**
+   * Optional JSON merged over apps/api/src/config/reminder-template.default.json
+   * (Telegram reminder copy + layout). See README.
+   */
+  TELEGRAM_REMINDER_TEMPLATE_JSON: process.env.TELEGRAM_REMINDER_TEMPLATE_JSON || '',
+
   /** Shared secret for Cloud Scheduler (or similar) calling /generate-daily and /send-reminders */
   INTERNAL_JOB_SECRET: process.env.INTERNAL_JOB_SECRET || '',
 

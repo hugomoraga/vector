@@ -52,6 +52,12 @@ variable "telegram_msg_link_invalid" {
   default     = ""
 }
 
+variable "telegram_reminder_template_json" {
+  type        = string
+  description = "Optional JSON merged over built-in reminder template (TELEGRAM_REMINDER_TEMPLATE_JSON); use Terraform heredoc for multiline"
+  default     = ""
+}
+
 variable "telegram_webhook_secret" {
   type        = string
   description = "Secret token for Telegram setWebhook (X-Telegram-Bot-Api-Secret-Token)"
