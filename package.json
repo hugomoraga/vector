@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -19,6 +19,6 @@
   },
   "packageManager": "npm@10.9.4",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   }
 }

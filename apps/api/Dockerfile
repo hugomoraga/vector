@@ -1,5 +1,5 @@
 # ─── Stage 1: Install + Build ───────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -20,11 +20,11 @@ RUN npm ci --ignore-scripts
 COPY packages/ packages/
 COPY apps/api/src/ apps/api/src/
 
-# Build API (tsc compiles to dist/)
-RUN npm run build --workspace=@vector/api
+# Build shared packages, then API (see turbo.json dependsOn ^build)
+RUN npx turbo build --filter=@vector/api
 
 # ─── Stage 2: Production ───────────────────────
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
@@ -40,9 +40,9 @@ COPY packages/config/package.json packages/config/
 # Install production dependencies only
 RUN npm ci --omit=dev --ignore-scripts --workspace=@vector/api
 
-# Copy built output + internal packages (needed at runtime)
+# Copy built output + compiled workspace packages (must match package.json "main")
 COPY --from=builder /app/apps/api/dist/ apps/api/dist/
-COPY packages/ packages/
+COPY --from=builder /app/packages/ packages/
 
 EXPOSE 8080
 

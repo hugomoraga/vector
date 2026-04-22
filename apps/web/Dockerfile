@@ -1,5 +1,5 @@
 # ─── Stage 1: Dependencies ──────────────────────
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY packages/config/package.json packages/config/
 RUN npm ci --ignore-scripts
 
 # ─── Stage 2: Build ────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -40,10 +40,10 @@ ENV NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 
-RUN npm run build --workspace=@vector/web
+RUN npx turbo build --filter=@vector/web
 
 # ─── Stage 3: Production ───────────────────────
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 

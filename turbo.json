@@ -11,6 +11,7 @@
       "persistent": true
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
       "env": ["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY", "TELEGRAM_BOT_TOKEN"]
