@@ -1,10 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { authMiddleware, asyncHandler } from '../middleware/auth';
+import { asyncHandler } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendError } from '../middleware/response';
 import { db, getAuth } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
-import type { User } from '@vector/types';
-
 const router = Router();
 
 router.post('/register', asyncHandler(async (req: Request, res: Response) => {

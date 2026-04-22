@@ -2,3 +2,7 @@ service-account.json
 *.pem
 .env*
 !.env.example
+
+# Never bake host build artifacts into the image (wrong OS + breaks Turbo/Next cache)
+**/.next
+**/dist

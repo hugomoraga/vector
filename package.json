@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -11,14 +11,20 @@
     "build": "turbo build",
     "start": "turbo start",
     "lint": "turbo lint",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "validate": "turbo run lint typecheck",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0"
   },
   "packageManager": "npm@10.9.4",
   "engines": {
     "node": ">=22.0.0"
+  },
+  "overrides": {
+    "eslint": "^8.57.0"
   }
 }

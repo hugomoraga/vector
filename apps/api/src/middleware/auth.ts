@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getAuth } from '../lib/firebase-admin';
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -10,8 +11,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const token = authHeader.split('Bearer ')[1];
 
-  const { getAuth } = require('firebase-admin/auth');
-  
   getAuth()
     .verifyIdToken(token)
     .then((decodedToken: { uid: string }) => {
@@ -23,7 +22,9 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     });
 }
 
-export function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) {
+export function asyncHandler(
+  fn: (_req: Request, _res: Response, _next: NextFunction) => Promise<void>,
+) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

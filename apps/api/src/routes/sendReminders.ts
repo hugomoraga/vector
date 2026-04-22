@@ -4,7 +4,7 @@ import { sendSuccess, sendError } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS, ENV } from '@vector/config';
 import { getTodayDateString } from '@vector/utils';
-import type { DailyItem, UserSettings } from '@vector/types';
+import type { UserSettings } from '@vector/types';
 
 const router = Router();
 

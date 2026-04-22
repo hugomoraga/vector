@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/auth';
 import { sendSuccess } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
-import { FIRESTORE_COLLECTIONS, ENV } from '@vector/config';
-import { getTodayDayOfWeek, getTodayDateString, generateId } from '@vector/utils';
-import type { DailyItem, Routine, RoutineStep, RoutineRule } from '@vector/types';
+import { FIRESTORE_COLLECTIONS } from '@vector/config';
+import { getTodayDayOfWeek, getTodayDateString } from '@vector/utils';
+import type { DailyItem, Routine } from '@vector/types';
 
 const router = Router();
 

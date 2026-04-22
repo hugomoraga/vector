@@ -25,11 +25,11 @@ app.use('/api/settings', settingsRoutes);
 app.use('/generate-daily', generateDailyRoutes);
 app.use('/send-reminders', sendRemindersRoutes);
 
-app.get('/health', (_, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use((err: any, _: any, res: any, __: any) => {
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });

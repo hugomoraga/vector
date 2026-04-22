@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/auth';
-import { sendSuccess, sendError } from '../middleware/response';
+import { sendSuccess } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
 import type { UserSettings } from '@vector/types';

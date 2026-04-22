@@ -15,7 +15,7 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
 
   const targetDate = date ? String(date) : formatDate(new Date());
 
-  let query: FirebaseFirestore.Query = db.collection(FIRESTORE_COLLECTIONS.DAILY_ITEMS)
+  const query: FirebaseFirestore.Query = db.collection(FIRESTORE_COLLECTIONS.DAILY_ITEMS)
     .where('userId', '==', uid)
     .where('date', '==', targetDate);
 

@@ -4,8 +4,7 @@ import { asyncHandler } from '../middleware/auth';
 import { sendSuccess, sendCreated, sendError } from '../middleware/response';
 import { db } from '../lib/firebase-admin';
 import { FIRESTORE_COLLECTIONS } from '@vector/config';
-import type { Routine, RoutineStep, RoutineRule } from '@vector/types';
-import { generateId } from '@vector/utils';
+import type { Routine } from '@vector/types';
 
 const router = Router();
 
