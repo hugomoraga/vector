@@ -65,7 +65,13 @@ router.post('/', asyncHandler(async (req, res) => {
     }
   }
 
-  sendSuccess(res, { generated: results.length, date: getTodayDateString() });
+  const payload = { generated: results.length, date: getTodayDateString() };
+  console.info('[generate-daily]', {
+    ...payload,
+    usersScanned: usersSnapshot.size,
+    dayOfWeek: getTodayDayOfWeek(),
+  });
+  sendSuccess(res, payload);
 }));
 
 export default router;
