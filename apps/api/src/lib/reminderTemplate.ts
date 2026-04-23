@@ -9,6 +9,7 @@ export interface ReminderTemplate {
   parseMode: ReminderParseMode;
   slotLabels: Record<string, string>;
   slotEmoji: Record<string, string>;
+  slotHeader: string;
   header: string;
   taskLine: string;
   footer: string;
@@ -43,6 +44,7 @@ function parseFullTemplate(raw: unknown): ReminderTemplate {
     parseMode: 'HTML',
     slotLabels: asStringMap(raw.slotLabels),
     slotEmoji: asStringMap(raw.slotEmoji),
+    slotHeader: typeof raw.slotHeader === 'string' ? raw.slotHeader : '<b>{slot_emoji} {slot_label}</b>\n',
     header,
     taskLine,
     footer,
@@ -56,6 +58,7 @@ function parsePartialTemplate(raw: unknown): Partial<ReminderTemplate> {
   if (typeof raw.taskLine === 'string') out.taskLine = raw.taskLine;
   if (typeof raw.footer === 'string') out.footer = raw.footer;
   if (raw.parseMode === 'HTML') out.parseMode = 'HTML';
+  if (typeof raw.slotHeader === 'string') out.slotHeader = raw.slotHeader;
   const sl = asStringMap(raw.slotLabels);
   if (Object.keys(sl).length) out.slotLabels = sl;
   const se = asStringMap(raw.slotEmoji);
@@ -68,6 +71,7 @@ function deepMergeTemplate(base: ReminderTemplate, patch: Partial<ReminderTempla
     parseMode: patch.parseMode ?? base.parseMode,
     slotLabels: { ...base.slotLabels, ...(patch.slotLabels ?? {}) },
     slotEmoji: { ...base.slotEmoji, ...(patch.slotEmoji ?? {}) },
+    slotHeader: patch.slotHeader ?? base.slotHeader,
     header: patch.header ?? base.header,
     taskLine: patch.taskLine ?? base.taskLine,
     footer: patch.footer ?? base.footer,
@@ -153,14 +157,27 @@ export function buildReminderMessage(
   };
   let text = applyVars(template.header, headerVars);
 
-  for (const item of sorted) {
+  const groupedBySlot = sorted.reduce<Record<TimeSlot, typeof sorted>>((acc, item) => {
+    if (!acc[item.slot]) acc[item.slot] = [];
+    acc[item.slot].push(item);
+    return acc;
+  }, {} as Record<TimeSlot, typeof sorted>);
+
+  for (const slot of SLOT_ORDER) {
+    const slotItems = groupedBySlot[slot];
+    if (!slotItems?.length) continue;
     const lineVars: Record<string, string> = {
-      title: escapeHtml(item.title),
-      slot: item.slot,
-      slot_label: escapeHtml(slotLabel(template, item.slot)),
-      slot_emoji: slotEmojiChar(template, item.slot),
+      slot: slot,
+      slot_label: escapeHtml(slotLabel(template, slot)),
+      slot_emoji: slotEmojiChar(template, slot),
     };
-    text += applyVars(template.taskLine, lineVars);
+    text += applyVars(template.slotHeader ?? template.taskLine, lineVars);
+    for (const item of slotItems) {
+      const itemVars: Record<string, string> = {
+        title: escapeHtml(item.title),
+      };
+      text += applyVars(template.taskLine, itemVars);
+    }
   }
 
   const todayUrl = webAppTodayUrl();
